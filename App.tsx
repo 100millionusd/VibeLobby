@@ -20,25 +20,25 @@ const App: React.FC = () => {
 
   // App State
   const [step, setStep] = useState<'home' | 'results' | 'details'>('home');
-  
+
   // Search State
   const [selectedInterest, setSelectedInterest] = useState<string>('');
   const [customInterest, setCustomInterest] = useState<string>('');
   const [activeSearchTerm, setActiveSearchTerm] = useState<string>('');
   const [displaySearchTerm, setDisplaySearchTerm] = useState<string>('');
   const [aiReasoning, setAiReasoning] = useState<string>('');
-  
+
   const [selectedCity, setSelectedCity] = useState<string>('Barcelona');
   const [results, setResults] = useState<ScoredHotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<ScoredHotel | null>(null);
-  
+
   // Async State
   const [aiForecast, setAiForecast] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
+
   // Data State (Async Fetched)
   const [relevantUsers, setRelevantUsers] = useState<User[]>([]);
-  
+
   // Gallery State
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
@@ -67,13 +67,13 @@ const App: React.FC = () => {
     // 1. AI Mapping (Vibe Check)
     if (hasCustomInput) {
       userDisplay = customInterest;
-      setSelectedInterest(''); 
+      setSelectedInterest('');
       const mappingResult = await findBestMatchingVibe(customInterest, ACTIVITIES);
       if (mappingResult) {
         targetVibe = mappingResult.matchedLabel;
         reasoning = mappingResult.reasoning;
       } else {
-        targetVibe = customInterest; 
+        targetVibe = customInterest;
       }
     }
 
@@ -98,7 +98,7 @@ const App: React.FC = () => {
     setSelectedHotel(hotel);
     setDetailImageIndex(0);
     setStep('details');
-    
+
     // Reset secondary data
     setRelevantUsers([]);
     setAiForecast('Analyzing crowd data...');
@@ -117,17 +117,20 @@ const App: React.FC = () => {
     if (!user) {
       login(); // Prompt login if trying to book
     } else {
-      setShowBooking(true);
+      // Redirect to Duffel Checkout (Production)
+      const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
+      window.location.href = checkoutUrl;
     }
   };
 
   const handleDirectBook = (hotel: ScoredHotel) => {
     if (!user) {
-       login();
-       return;
+      login();
+      return;
     }
-    handleHotelSelect(hotel); // Ensure data is loaded
-    setShowBooking(true);
+    // Redirect to Duffel Checkout (Production)
+    const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
+    window.location.href = checkoutUrl;
   };
 
   const handleBookingConfirm = () => {
@@ -145,7 +148,12 @@ const App: React.FC = () => {
     if (!selectedHotel) return;
     setDetailImageIndex((prev) => (prev - 1 + selectedHotel.images.length) % selectedHotel.images.length);
   };
-  
+
+  // Image Error Handler
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = `https://api.dicebear.com/7.x/identicon/svg?seed=${Date.now()}`;
+  };
+
   // ------------------------------------------------------------------
   // LOADING SCREEN (App Initialization)
   // ------------------------------------------------------------------
@@ -153,10 +161,10 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg animate-bounce">
-            V
+          V
         </div>
         <div className="mt-4 flex items-center gap-2 text-gray-500 font-medium">
-           <Loader2 className="animate-spin" size={16} /> Connecting to Web3Auth...
+          <Loader2 className="animate-spin" size={16} /> Connecting to Web3Auth...
         </div>
       </div>
     );
@@ -164,10 +172,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 relative">
-      
-      <NotificationToast 
-        notification={activeNotification} 
-        onClose={() => setActiveNotification(null)} 
+
+      <NotificationToast
+        notification={activeNotification}
+        onClose={() => setActiveNotification(null)}
       />
 
       <CookieBanner />
@@ -180,47 +188,52 @@ const App: React.FC = () => {
           </div>
           <span className="font-bold text-xl tracking-tight text-gray-900">VibeLobby</span>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {step !== 'home' && (
             <div className="hidden md:block text-sm font-medium bg-gray-100 px-3 py-1 rounded-full text-gray-600">
               {selectedCity} • {displaySearchTerm}
             </div>
           )}
-          
+
           {/* User Avatar (Auth State) */}
           {user ? (
             <div className="flex items-center gap-3">
-               <div className="text-right hidden sm:block">
-                 <div className="text-xs font-bold text-gray-900">{user.name}</div>
-                 <div className="text-[10px] text-gray-400 font-mono">
-                    {user.walletAddress 
-                      ? `${user.walletAddress.substring(0,6)}...${user.walletAddress.substring(user.walletAddress.length-4)}`
-                      : 'Social Login'}
-                 </div>
-               </div>
-               <button onClick={logout} className="relative group">
-                 <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
-                   <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
-                 </div>
-                 <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="text-xs font-bold flex items-center gap-1 text-red-600"><LogOut size={12}/> Sign Out</div>
-                 </div>
-               </button>
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-bold text-gray-900">{user.name}</div>
+                <div className="text-[10px] text-gray-400 font-mono">
+                  {user.walletAddress
+                    ? `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}`
+                    : 'Social Login'}
+                </div>
+              </div>
+              <button onClick={logout} className="relative group">
+                <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+                  <img
+                    src={user.avatar}
+                    alt="Me"
+                    className="w-full h-full object-cover"
+                    onError={handleImageError}
+                  />
+                </div>
+                <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <div className="text-xs font-bold flex items-center gap-1 text-red-600"><LogOut size={12} /> Sign Out</div>
+                </div>
+              </button>
             </div>
           ) : (
-            <button 
+            <button
               onClick={login}
               className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm"
             >
-               <LogIn size={16} /> Sign In
+              <LogIn size={16} /> Sign In
             </button>
           )}
         </div>
       </nav>
 
       <main className="max-w-md mx-auto w-full pt-6 px-4 min-h-[85vh]">
-        
+
         {/* VIEW: HOME SEARCH */}
         {step === 'home' && (
           <div className="flex flex-col min-h-[80vh] justify-center py-10">
@@ -233,7 +246,7 @@ const App: React.FC = () => {
 
             {/* Interest Input */}
             <div className="space-y-6">
-              
+
               {/* Preset Buttons */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">What's your vibe?</label>
@@ -245,11 +258,10 @@ const App: React.FC = () => {
                         setSelectedInterest(act.label);
                         setCustomInterest('');
                       }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedInterest === act.label
-                          ? 'bg-brand-600 text-white shadow-lg scale-105'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedInterest === act.label
+                        ? 'bg-brand-600 text-white shadow-lg scale-105'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
                     >
                       {act.label}
                     </button>
@@ -268,21 +280,21 @@ const App: React.FC = () => {
 
               {/* Custom AI Input */}
               <div className="relative group">
-                 <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-300 to-purple-400 rounded-xl opacity-20 group-focus-within:opacity-100 transition duration-300 blur-sm"></div>
-                 <div className="relative bg-white rounded-xl flex items-center p-1 border border-gray-200 group-focus-within:border-transparent">
-                    <Sparkles size={18} className="text-purple-500 ml-3 shrink-0" />
-                    <input 
-                      type="text"
-                      value={customInterest}
-                      onChange={(e) => {
-                        setCustomInterest(e.target.value);
-                        if (e.target.value) setSelectedInterest('');
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="e.g. Crossfit, Raving, Pottery..."
-                      className="w-full bg-transparent p-3 outline-none text-gray-900 placeholder:text-gray-400"
-                    />
-                 </div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-300 to-purple-400 rounded-xl opacity-20 group-focus-within:opacity-100 transition duration-300 blur-sm"></div>
+                <div className="relative bg-white rounded-xl flex items-center p-1 border border-gray-200 group-focus-within:border-transparent">
+                  <Sparkles size={18} className="text-purple-500 ml-3 shrink-0" />
+                  <input
+                    type="text"
+                    value={customInterest}
+                    onChange={(e) => {
+                      setCustomInterest(e.target.value);
+                      if (e.target.value) setSelectedInterest('');
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="e.g. Crossfit, Raving, Pottery..."
+                    className="w-full bg-transparent p-3 outline-none text-gray-900 placeholder:text-gray-400"
+                  />
+                </div>
               </div>
 
               {/* City Input */}
@@ -290,7 +302,7 @@ const App: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Where to?</label>
                 <div className="relative group">
                   <MapPin className="absolute left-3 top-3.5 text-gray-400 group-focus-within:text-brand-500 transition-colors" size={18} />
-                  <input 
+                  <input
                     type="text"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
@@ -321,7 +333,7 @@ const App: React.FC = () => {
         {/* VIEW: RESULTS LIST */}
         {step === 'results' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            
+
             <div className="flex justify-between items-baseline mb-4">
               <div>
                 <h2 className="text-xl font-bold">Recommended for you</h2>
@@ -337,10 +349,10 @@ const App: React.FC = () => {
 
             {/* RESULTS OR FALLBACK */}
             {results.length > 0 ? (
-               results.map((hotel) => (
-                <SearchCard 
-                  key={hotel.id} 
-                  hotel={hotel} 
+              results.map((hotel) => (
+                <SearchCard
+                  key={hotel.id}
+                  hotel={hotel}
                   searchedInterest={activeSearchTerm}
                   onSelect={handleHotelSelect}
                   onBook={handleDirectBook}
@@ -348,23 +360,23 @@ const App: React.FC = () => {
               ))
             ) : (
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
-                 <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
-                    <Flag size={40} className="fill-brand-100" />
-                 </div>
-                 <h3 className="text-xl font-extrabold text-gray-900 mb-2">Be the Pioneer in {selectedCity}</h3>
-                 <p className="text-gray-600 mb-8 max-w-xs mx-auto leading-relaxed">
-                   No one has started a <strong>{activeSearchTerm}</strong> lobby here yet. 
-                   <br/><br/>
-                   Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
-                 </p>
-                 <a 
-                   href={`https://www.google.com/search?q=hotels+in+${selectedCity}`}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
-                 >
-                   Search Hotels <ExternalLink size={18} className="ml-2" />
-                 </a>
+                <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                  <Flag size={40} className="fill-brand-100" />
+                </div>
+                <h3 className="text-xl font-extrabold text-gray-900 mb-2">Be the Pioneer in {selectedCity}</h3>
+                <p className="text-gray-600 mb-8 max-w-xs mx-auto leading-relaxed">
+                  No one has started a <strong>{activeSearchTerm}</strong> lobby here yet.
+                  <br /><br />
+                  Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
+                </p>
+                <a
+                  href={`https://www.google.com/search?q=hotels+in+${selectedCity}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Search Hotels <ExternalLink size={18} className="ml-2" />
+                </a>
               </div>
             )}
 
@@ -374,7 +386,7 @@ const App: React.FC = () => {
         {/* VIEW: HOTEL DETAILS */}
         {step === 'details' && selectedHotel && (
           <div className="animate-in slide-in-from-right duration-300 pb-24">
-            <button 
+            <button
               onClick={() => setStep('results')}
               className="mb-4 flex items-center text-sm font-medium text-gray-500 hover:text-gray-900"
             >
@@ -383,48 +395,48 @@ const App: React.FC = () => {
 
             {/* IMAGE CAROUSEL */}
             <div className="relative w-full h-72 mb-6 group rounded-2xl shadow-md overflow-hidden bg-gray-200">
-              <img 
-                src={selectedHotel.images[detailImageIndex]} 
-                alt="" 
-                className="w-full h-full object-cover transition-all duration-300" 
+              <img
+                src={selectedHotel.images[detailImageIndex]}
+                alt=""
+                className="w-full h-full object-cover transition-all duration-300"
               />
-              
+
               {selectedHotel.images.length > 1 && (
                 <>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-                  
+
                   {/* Arrows */}
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); prevDetailImage(); }}
                     className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white text-gray-800 transition-all active:scale-95"
                   >
                     <ChevronLeft size={20} />
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); nextDetailImage(); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white text-gray-800 transition-all active:scale-95"
                   >
                     <ChevronRight size={20} />
                   </button>
-                  
+
                   {/* Dots */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                     {selectedHotel.images.map((_, idx) => (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         className={`h-1.5 rounded-full transition-all shadow-sm
-                          ${idx === detailImageIndex ? 'bg-white w-6' : 'bg-white/50 w-1.5'}`} 
+                          ${idx === detailImageIndex ? 'bg-white w-6' : 'bg-white/50 w-1.5'}`}
                       />
                     ))}
                   </div>
                 </>
               )}
             </div>
-            
+
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 leading-none">{selectedHotel.name}</h1>
-                <p className="text-gray-500 mt-1 flex items-center"><MapPin size={14} className="mr-1"/> {selectedHotel.city}</p>
+                <p className="text-gray-500 mt-1 flex items-center"><MapPin size={14} className="mr-1" /> {selectedHotel.city}</p>
               </div>
               <div className="bg-brand-50 text-brand-700 px-3 py-1 rounded-lg font-bold text-xl">
                 ${selectedHotel.pricePerNight}
@@ -446,19 +458,20 @@ const App: React.FC = () => {
 
             <div className="mb-6">
               <h3 className="font-bold text-lg mb-3">Who's Here?</h3>
-              
+
               {/* MEMBER AVATARS (Data from Async API) */}
               {relevantUsers.length > 0 ? (
                 <div className="flex items-center mb-4 overflow-x-auto no-scrollbar pb-2">
                   <div className="flex -space-x-3 px-1">
                     {relevantUsers.map(user => (
                       <div key={user.id} className="relative group/avatar cursor-pointer">
-                        <img 
-                          src={user.avatar} 
-                          className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover hover:scale-105 transition-transform hover:z-10 hover:border-brand-200" 
-                          alt={user.name} 
+                        <img
+                          src={user.avatar}
+                          className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover hover:scale-105 transition-transform hover:z-10 hover:border-brand-200"
+                          alt={user.name}
+                          onError={handleImageError}
                         />
-                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/avatar:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/avatar:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                           {user.name} • {user.bio}
                         </div>
                       </div>
@@ -471,7 +484,7 @@ const App: React.FC = () => {
               ) : (
                 <div className="text-sm text-gray-500 italic mb-4">
                   {selectedHotel.id.startsWith('dyn_') ? (
-                     `${selectedHotel.matchingGuestCount} ${activeSearchTerm} fans are checking in this week.`
+                    `${selectedHotel.matchingGuestCount} ${activeSearchTerm} fans are checking in this week.`
                   ) : (
                     `Be the first ${activeSearchTerm} fan to join!`
                   )}
@@ -487,13 +500,13 @@ const App: React.FC = () => {
                       <span className="font-medium">{item.label}</span>
                     </div>
                     <div className="flex items-center">
-                       <div className="w-24 h-2 bg-gray-100 rounded-full mr-3 overflow-hidden">
-                         <div 
-                            className={`h-full ${item.label === activeSearchTerm ? 'bg-brand-500' : 'bg-gray-400'}`} 
-                            style={{ width: `${(item.count / selectedHotel.totalGuestCount) * 100}%` }}
-                          />
-                       </div>
-                       <span className="text-sm text-gray-500 w-6 text-right">{item.count}</span>
+                      <div className="w-24 h-2 bg-gray-100 rounded-full mr-3 overflow-hidden">
+                        <div
+                          className={`h-full ${item.label === activeSearchTerm ? 'bg-brand-500' : 'bg-gray-400'}`}
+                          style={{ width: `${(item.count / selectedHotel.totalGuestCount) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-500 w-6 text-right">{item.count}</span>
                     </div>
                   </div>
                 ))}
@@ -515,7 +528,7 @@ const App: React.FC = () => {
 
             {/* Sticky Booking Action */}
             <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 md:static md:bg-transparent md:border-0 md:p-0">
-              <button 
+              <button
                 onClick={handleBookClick}
                 className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 flex items-center justify-center text-lg"
               >
@@ -528,7 +541,7 @@ const App: React.FC = () => {
       </main>
 
       <Footer onOpenLegal={(page) => setLegalPage(page)} />
-      
+
       {/* OVERLAY: BOOKING MODAL */}
       {showBooking && selectedHotel && (
         <BookingModal
@@ -541,13 +554,13 @@ const App: React.FC = () => {
 
       {/* OVERLAY: LOBBY CHAT */}
       {showLobby && selectedHotel && user && (
-        <LobbyChat 
-          hotel={selectedHotel} 
-          interest={activeSearchTerm} 
+        <LobbyChat
+          hotel={selectedHotel}
+          interest={activeSearchTerm}
           currentUser={user}
           // Pass the relevant users we fetched earlier to the lobby
           initialMembers={relevantUsers}
-          onClose={() => setShowLobby(false)} 
+          onClose={() => setShowLobby(false)}
           onNotify={setActiveNotification}
         />
       )}
