@@ -1,5 +1,5 @@
-const express = require('express');
-const { Duffel } = require('@duffel/api');
+import express from 'express';
+import { Duffel } from '@duffel/api';
 const router = express.Router();
 
 const duffel = new Duffel({
@@ -74,4 +74,4 @@ router.post('/book', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
