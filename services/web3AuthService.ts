@@ -23,7 +23,7 @@ const privateKeyProvider = new EthereumPrivateKeyProvider({
 
 export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
-  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
   privateKeyProvider,
   uiConfig: {
     appName: "VibeLobby",

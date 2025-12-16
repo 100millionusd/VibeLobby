@@ -28,7 +28,7 @@ export const HOTELS: Hotel[] = [
     city: 'Berlin',
     description: 'Industrial chic hostel in the heart of Mitte. Perfect for meeting fellow travelers.',
     images: [
-      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80', 
+      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80',
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80'
     ],
     pricePerNight: 45,
@@ -42,7 +42,7 @@ export const HOTELS: Hotel[] = [
     city: 'Berlin',
     description: 'Luxury member club with rooftop pool. The place to be for founders and creatives.',
     images: [
-      'https://images.unsplash.com/photo-1571896349842-68c8949139f1?w=800&q=80', 
+      'https://images.unsplash.com/photo-1571896349842-68c8949139f1?w=800&q=80',
       'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80'
     ],
     pricePerNight: 250,
@@ -56,7 +56,7 @@ export const HOTELS: Hotel[] = [
     city: 'Berlin',
     description: 'Creative hotel near the East Side Gallery. Known for its organic food and art installations.',
     images: [
-      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80', 
+      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80',
       'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80'
     ],
     pricePerNight: 120,
@@ -110,7 +110,7 @@ export const HOTELS: Hotel[] = [
     city: 'Barcelona',
     description: 'Vibrant design hostel in Gràcia. A hotspot for backpackers and art lovers.',
     images: [
-      'https://images.unsplash.com/photo-1522771753033-68d2f78c8534?w=800&q=80'
+      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&q=80'
     ],
     pricePerNight: 40,
     rating: 4.3,
@@ -137,7 +137,7 @@ export const HOTELS: Hotel[] = [
     city: 'Barcelona',
     description: 'Sophisticated luxury with a colonial touch. Great for high-end networking.',
     images: [
-      'https://images.unsplash.com/photo-1563911302283-d2bc129e7c1f?w=800&q=80'
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80'
     ],
     pricePerNight: 280,
     rating: 4.8,
@@ -206,7 +206,7 @@ export const MOCK_BOOKINGS: Booking[] = [
   ...Array.from({ length: 10 }).map((_, i) => ({
     id: `b_w_barca_tech_${i}`, userId: `u${i % 5}`, hotelId: 'h6', checkIn: '2023-10-01', checkOut: '2023-10-05', primaryInterest: 'Startups'
   })),
-  
+
   // Generator Barcelona: Foodie / Techno / Hiking
   ...Array.from({ length: 8 }).map((_, i) => ({
     id: `b_gen_barca_food_${i}`, userId: `u${i % 5}`, hotelId: 'h7', checkIn: '2023-10-01', checkOut: '2023-10-05', primaryInterest: 'Foodie'
