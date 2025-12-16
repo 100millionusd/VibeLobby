@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthContextType, BookingConfirmationResponse, DigitalKey } from '../types';
 import { web3auth, initWeb3Auth } from '../services/web3AuthService';
+import { api } from '../services/api';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -35,15 +36,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await initWeb3Auth();
 
         if (web3auth.connected) {
-           await processLogin();
+          await processLogin();
         } else {
-           // Attempt to load from local storage if Web3Auth not active but we have a session
-           // OR we just stay logged out.
-           const stored = localStorage.getItem('vibe_user');
-           if (stored) {
-             const currentUser = JSON.parse(stored);
-             setUser(checkExpiredKeys(currentUser) || currentUser);
-           }
+          // Attempt to load from local storage if Web3Auth not active but we have a session
+          // OR we just stay logged out.
+          const stored = localStorage.getItem('vibe_user');
+          if (stored) {
+            const currentUser = JSON.parse(stored);
+            setUser(checkExpiredKeys(currentUser) || currentUser);
+          }
         }
       } catch (error) {
         console.error('Auth initialization failed', error);
@@ -57,14 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const processLogin = async () => {
     if (!web3auth.provider) return;
-    
+
     try {
       // 1. Get User Info from Web3Auth (Social data)
       const userInfo = await web3auth.getUserInfo();
-      
+
       // 2. Get Wallet Address
       // For EIP155 (Ethereum), we request accounts via RPC
-      const accounts = await web3auth.provider.request<string[]>({ method: "eth_accounts" });
+      const accounts = (await web3auth.provider.request({ method: "eth_accounts" })) as string[];
       const address = accounts && accounts.length > 0 ? accounts[0] : undefined;
 
       // 3. Sync with Local Storage for Digital Keys persistence
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedUser = JSON.parse(stored);
         // Only merge keys if the ID matches to prevent leaking keys between accounts
         if (storedUser.id === (userInfo.verifierId || address)) {
-           existingKeys = storedUser.digitalKeys || [];
+          existingKeys = storedUser.digitalKeys || [];
         }
       }
 
@@ -102,15 +103,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async () => {
-    if (!web3auth) {
-      console.error("Web3Auth not initialized");
+    // Fallback if Web3Auth failed to load or user prefers guest mode
+    if (!web3auth || web3auth.status === 'not_ready') {
+      console.warn("Web3Auth unavailable, using Guest Login");
+      const guestUser = await api.auth.loginAsGuest();
+      setUser(guestUser);
       return;
     }
+
     try {
       await web3auth.connect();
-      await processLogin();
+      if (web3auth.connected) {
+        await processLogin();
+      } else {
+        // User closed popup or connection failed
+        throw new Error("Connection failed");
+      }
     } catch (error) {
       console.error("Web3Auth Login Error:", error);
+      // Fallback to guest login on error
+      const guestUser = await api.auth.loginAsGuest();
+      setUser(guestUser);
     }
   };
 
@@ -150,11 +163,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated: !!user, 
-      isLoading, 
-      login, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      login,
       logout,
       grantDigitalKey
     }}>
