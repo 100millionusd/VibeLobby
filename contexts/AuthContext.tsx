@@ -43,7 +43,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const stored = localStorage.getItem('vibe_user');
           if (stored) {
             const currentUser = JSON.parse(stored);
-            setUser(checkExpiredKeys(currentUser) || currentUser);
+            // Only restore if it's NOT a guest user (since user requested removal of guest mode)
+            if (!currentUser.isGuest) {
+              setUser(checkExpiredKeys(currentUser) || currentUser);
+            } else {
+              // Clean up stale guest session
+              localStorage.removeItem('vibe_user');
+            }
           }
         }
       } catch (error) {
@@ -120,11 +126,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await web3auth.logout();
+      if (web3auth && web3auth.connected) {
+        await web3auth.logout();
+      }
+    } catch (error) {
+      console.error("Web3Auth logout failed (non-fatal):", error);
+    } finally {
+      // Always clear local state
       setUser(null);
       localStorage.removeItem('vibe_user');
-    } catch (error) {
-      console.error("Logout failed:", error);
     }
   };
 
