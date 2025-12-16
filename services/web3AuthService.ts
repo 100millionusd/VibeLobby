@@ -17,13 +17,13 @@ const chainConfig = {
   tickerName: "Ethereum",
 };
 
-const privateKeyProvider = new EthereumPrivateKeyProvider({ 
-  config: { chainConfig } 
+const privateKeyProvider = new EthereumPrivateKeyProvider({
+  config: { chainConfig }
 });
 
 export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
-  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
+  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
   privateKeyProvider,
   uiConfig: {
     appName: "VibeLobby",
