@@ -103,11 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async () => {
-    // Fallback if Web3Auth failed to load or user prefers guest mode
     if (!web3auth || web3auth.status === 'not_ready') {
-      console.warn("Web3Auth unavailable, using Guest Login");
-      const guestUser = await api.auth.loginAsGuest();
-      setUser(guestUser);
+      console.error("Web3Auth not initialized");
       return;
     }
 
@@ -115,15 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await web3auth.connect();
       if (web3auth.connected) {
         await processLogin();
-      } else {
-        // User closed popup or connection failed
-        throw new Error("Connection failed");
       }
     } catch (error) {
       console.error("Web3Auth Login Error:", error);
-      // Fallback to guest login on error
-      const guestUser = await api.auth.loginAsGuest();
-      setUser(guestUser);
     }
   };
 
