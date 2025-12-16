@@ -10,7 +10,7 @@ const CLIENT_ID = "BFqTPKi0dxXvTnq32q42HWYrGUwOSaiFaiNz1ELOT1lqOLoHiwd6yCZ5wm8F_
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0x1", // Mainnet
-  rpcTarget: "https://rpc.ankr.com/eth",
+  rpcTarget: "https://cloudflare-eth.com",
   displayName: "Ethereum Mainnet",
   blockExplorerUrl: "https://etherscan.io",
   ticker: "ETH",
