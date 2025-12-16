@@ -6,14 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js"
   },
   "dependencies": {
+    "@duffel/api": "^4.21.0",
     "@google/genai": "^1.33.0",
     "@web3auth/base": "9.4.4",
     "@web3auth/ethereum-provider": "9.4.4",
     "@web3auth/modal": "9.4.4",
     "buffer": "^6.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "loglevel": "^1.9.2",
     "lucide-react": "^0.561.0",
     "react": "^18.3.1",
