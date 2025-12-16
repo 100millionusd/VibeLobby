@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ScoredHotel } from '../types';
 import { X, ExternalLink, Calendar, CheckCircle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { AffiliateDeepLinker } from '../services/AffiliateDeepLinker';
@@ -12,6 +12,16 @@ interface BookingModalProps {
 
 const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, onConfirm }) => {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect Mobile Device on Mount
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    };
+    setIsMobile(checkMobile());
+  }, []);
 
   // MOCK DATA GENERATION FOR AFFILIATE LINK
   // In a real app, these would come from the user's search query state
@@ -50,10 +60,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   }, [bookingDates, interest, hotel]);
 
   const handleBookingClick = () => {
-    // When the user clicks the link:
-    // 1. The browser opens a NEW TAB for Booking.com (due to target="_blank").
-    // 2. We update the UI state to "Success" immediately in this tab.
-    setIsSuccess(true);
+    // CRITICAL FIX: Delay the state update. 
+    // If we update React state immediately, the <a> tag is removed from the DOM 
+    // instantly. Some browsers/OSs stop processing the 'href' navigation 
+    // if the source element is destroyed during the event bubble phase.
+    // This delay ensures the "Open in Booking.com" action completes first.
+    setTimeout(() => {
+      setIsSuccess(true);
+    }, 1000);
   };
 
   return (
@@ -138,17 +152,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                 </div>
                 <div className="text-xs text-blue-800">
                   <span className="font-bold block mb-0.5">Booking via Partner</span>
-                  To ensure the best price and secure payment, you will be redirected to Booking.com. The link opens in a new tab so you can confirm your booking here.
+                  To ensure the best price and secure payment, you will be redirected to Booking.com. 
+                  {!isMobile && " This will open in a new tab."}
                 </div>
               </div>
             </div>
 
-            {/* Footer Action - CHANGED TO DIRECT <a> TAG FOR DEEP LINK SUPPORT */}
+            {/* Footer Action - SMART LINKING */}
             <div className="p-5 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
               <a 
                 href={affiliateLink}
-                target="_blank"
-                rel="noopener noreferrer"
+                // LOGIC: 
+                // Mobile: Target self (undefined) to allow Deep Linking to App without triggering "New Tab + App" bug.
+                // Desktop: Target blank to keep VibeLobby open in background.
+                target={isMobile ? undefined : "_blank"}
+                rel={isMobile ? undefined : "noopener noreferrer"}
                 onClick={handleBookingClick}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all transform active:scale-[0.98] hover:shadow-xl text-center cursor-pointer decoration-0"
               >
