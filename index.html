@@ -1,53 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VibeLobby - Find Your Vibe</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <!-- iOS Home Screen icon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Android / PWA -->
-    <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#ffffff" />
-    <script src="https://assets.duffel.com/components/v1/duffel-components.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeLobby - Find Your Vibe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <!-- iOS Home Screen icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <!-- Android / PWA -->
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#ffffff" />
+  <script src="https://assets.duffel.com/components/duffel-components.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#f43f5e', // Rose-500
+              600: '#e11d48',
+              900: '#881337',
             },
-            colors: {
-              brand: {
-                50: '#fff1f2',
-                100: '#ffe4e6',
-                500: '#f43f5e', // Rose-500
-                600: '#e11d48',
-                900: '#881337',
-              },
-              dark: {
-                800: '#1f2937',
-                900: '#111827',
-              }
+            dark: {
+              800: '#1f2937',
+              900: '#111827',
             }
           }
         }
       }
-    </script>
-    <style>
-      /* Hide scrollbar for clean horizontal scrolling */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-    </style>
+    }
+  </script>
+  <style>
+    /* Hide scrollbar for clean horizontal scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -63,10 +65,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

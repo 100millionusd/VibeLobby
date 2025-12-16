@@ -5,7 +5,7 @@ import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 // NOTE: In production, this Client ID should be in an environment variable.
 // This is a public demo ID provided by Web3Auth for testing.
 // You must register your app at https://dashboard.web3auth.io to get your own ID.
-const CLIENT_ID = "BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXQhiMhQ_LXRRI75SKOreaATPbvLidGS+wIe71ef3qcfP8cq+xvewRA"; // Demo ID
+const CLIENT_ID = "BFqTPKi0dxXvTnq32q42HWYrGUwOSaiFaiNz1ELOT1lqOLoHiwd6yCZ5wm8F_P_4aq7EKQgDhanfttNw5n14y1M"; // User provided ID
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
