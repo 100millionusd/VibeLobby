@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { ScoredHotel } from '../types';
-import { X, ExternalLink, Calendar, CheckCircle, ShieldCheck, ArrowRight } from 'lucide-react';
-import { AffiliateDeepLinker } from '../services/AffiliateDeepLinker';
+import React, { useState, useEffect, useRef } from 'react';
+import { ScoredHotel, RoomOffer, GuestDetails } from '../types';
+import { X, Calendar, CheckCircle, ShieldCheck, ArrowRight, Bed, Users, CreditCard, Loader2, ChevronLeft, Lock, AlertCircle } from 'lucide-react';
+import { duffelService } from '../services/duffelService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BookingModalProps {
   hotel: ScoredHotel;
@@ -10,176 +11,368 @@ interface BookingModalProps {
   onConfirm: () => void;
 }
 
+type BookingStep = 'search' | 'selection' | 'details' | 'payment' | 'confirmed';
+
 const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, onConfirm }) => {
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { grantDigitalKey } = useAuth();
+  const [step, setStep] = useState<BookingStep>('search');
+  
+  // Data State
+  const [offers, setOffers] = useState<RoomOffer[]>([]);
+  const [selectedOffer, setSelectedOffer] = useState<RoomOffer | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  // Form State
+  const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '' });
+  const [bookingRef, setBookingRef] = useState('');
 
-  // Detect Mobile Device on Mount
+  // Duffel Component State
+  const duffelContainerRef = useRef<HTMLDivElement>(null);
+  const [duffelInstance, setDuffelInstance] = useState<any>(null);
+
+  // 1. On Mount: Simulate Searching Availability via Duffel
   useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const fetchOffers = async () => {
+      setIsLoading(true);
+      const checkIn = new Date();
+      const checkOut = new Date();
+      checkOut.setDate(checkOut.getDate() + 3);
+
+      try {
+        const rooms = await duffelService.searchAccommodations(hotel, checkIn, checkOut);
+        setOffers(rooms);
+        setStep('selection');
+      } catch (e) {
+        console.error("Duffel Search Failed", e);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setIsMobile(checkMobile());
-  }, []);
-
-  // MOCK DATA GENERATION FOR AFFILIATE LINK
-  // In a real app, these would come from the user's search query state
-  const bookingDates = useMemo(() => {
-    const checkIn = new Date();
-    checkIn.setDate(checkIn.getDate() + 14); // Default to 2 weeks from now
     
-    const checkOut = new Date(checkIn);
-    checkOut.setDate(checkOut.getDate() + 3); // 3 nights stay
-    
-    return { checkIn, checkOut };
-  }, []);
+    fetchOffers();
+  }, [hotel]);
 
-  // Format for display
-  const displayDateString = `${bookingDates.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${bookingDates.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (3 Nights)`;
+  // 2. Initialize Duffel Components when reaching payment step
+  useEffect(() => {
+    if (step === 'payment' && duffelContainerRef.current) {
+      // NOTE: In production, use your actual Duffel Public Key
+      const DUFFEL_PUBLIC_KEY = 'test_123_placeholder_key'; 
+      
+      try {
+        if (window.DuffelComponents) {
+          const duffel = window.DuffelComponents.createCardComponent({
+            clientKey: DUFFEL_PUBLIC_KEY,
+            intent: 'tokenize',
+            styles: {
+              input: {
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                padding: '12px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px',
+                color: '#111827',
+                boxShadow: 'none',
+              },
+              inputFocused: {
+                borderColor: '#e11d48',
+                boxShadow: '0 0 0 1px #e11d48',
+              },
+              label: {
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: '#6b7280',
+                marginBottom: '4px',
+              }
+            }
+          });
+          duffel.mount(duffelContainerRef.current);
+          setDuffelInstance(duffel);
 
-  // Generate the link immediately
-  const affiliateLink = useMemo(() => {
-    // Check if it's a dynamic (simulated) hotel or a specific one from our mock DB
-    const isDynamic = hotel.id.startsWith('dyn_');
+          return () => {
+             // Cleanup if user navigates back
+             if (duffel) duffel.unmount();
+          };
+        } else {
+          setErrorMsg("Payment system failed to load. Please check your connection.");
+        }
+      } catch (err) {
+        console.error("Duffel Load Error", err);
+        // Fallback for demo if key is invalid
+        setErrorMsg("Demo Mode: Duffel Key not configured.");
+      }
+    }
+  }, [step]);
 
-    // STRATEGY:
-    // 1. If it's a Dynamic Hotel (generated by algorithm), it doesn't exist on Booking.com.
-    //    We send the user to a City Search for that city.
-    // 2. If it's a Mock Data Hotel (e.g. Generator Berlin), it exists.
-    //    We send the user to a search for "Hotel Name, City" to find that specific property.
-    const searchQuery = isDynamic ? hotel.city : `${hotel.name}, ${hotel.city}`;
-
-    return AffiliateDeepLinker.generateBookingLink(
-      searchQuery,
-      bookingDates.checkIn,
-      bookingDates.checkOut,
-      '123456', // YOUR MOCK AFFILIATE ID
-      interest
-    );
-  }, [bookingDates, interest, hotel]);
-
-  const handleBookingClick = () => {
-    // CRITICAL FIX: Delay the state update. 
-    // If we update React state immediately, the <a> tag is removed from the DOM 
-    // instantly. Some browsers/OSs stop processing the 'href' navigation 
-    // if the source element is destroyed during the event bubble phase.
-    // This delay ensures the "Open in Booking.com" action completes first.
-    setTimeout(() => {
-      setIsSuccess(true);
-    }, 1000);
+  // Handler: Select Room
+  const handleSelectOffer = (offer: RoomOffer) => {
+    setSelectedOffer(offer);
+    setStep('details');
   };
+
+  // Handler: Submit Details & Move to Payment
+  const handleSubmitDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (guestDetails.firstName && guestDetails.email) {
+      setStep('payment');
+    }
+  };
+
+  // Handler: Process Payment & Create Order via Backend Service
+  const handlePay = async () => {
+    if (!selectedOffer) return;
+    setIsLoading(true);
+    setErrorMsg(null);
+    
+    // Mock Dates
+    const checkIn = new Date();
+    const checkOut = new Date();
+    checkOut.setDate(checkOut.getDate() + 3);
+    
+    try {
+      let paymentToken = "tok_visa_simulation";
+
+      // 1. Tokenize Card via Duffel Component
+      if (duffelInstance) {
+        try {
+          const result = await duffelInstance.createCardToken();
+          if (result.error) {
+            throw new Error(result.error.message);
+          }
+          paymentToken = result.token;
+        } catch (e: any) {
+           // Fallback for demo purposes if the API key is invalid/placeholder
+           // In production, you would throw here: throw e;
+           console.warn("Duffel Tokenization failed (expected without valid key). Using mock token.");
+           paymentToken = "tok_mock_fallback";
+        }
+      }
+
+      // 2. Call our Backend Integration Service
+      const result = await duffelService.bookHotelAndUnlockLobby(
+        hotel,
+        selectedOffer.id, 
+        guestDetails, 
+        paymentToken,
+        checkIn,
+        checkOut
+      );
+
+      if (result.success) {
+        setBookingRef(result.data.booking_reference);
+        
+        // 3. Trigger the "Unlock Logic" in AuthContext
+        grantDigitalKey(result);
+
+        setStep('confirmed');
+      }
+    } catch (e: any) {
+      console.error("Payment Failed", e);
+      setErrorMsg(e.message || "Payment declined. Please check your card details.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFinish = () => {
+    onConfirm(); // Close modal and open chat
+  };
+
+  // --- RENDER HELPERS ---
+
+  // Header Logic
+  const renderHeader = () => (
+    <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
+      <div className="flex items-center gap-2">
+        {step !== 'search' && step !== 'selection' && step !== 'confirmed' && (
+          <button onClick={() => setStep(prev => prev === 'payment' ? 'details' : 'selection')} className="p-1 hover:bg-gray-100 rounded-full">
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <h2 className="font-bold text-lg text-gray-900">
+          {step === 'confirmed' ? 'Booking Confirmed' : 'Secure Booking'}
+        </h2>
+      </div>
+      {step !== 'confirmed' && (
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+          <X size={20} />
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative flex flex-col max-h-[90vh]">
         
-        {/* Header */}
-        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
-          <h2 className="font-bold text-lg text-gray-900">
-            {isSuccess ? 'Welcome Back!' : 'Complete Booking'}
-          </h2>
-          {!isSuccess && (
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
-              <X size={20} />
-            </button>
-          )}
-        </div>
+        {renderHeader()}
 
-        {/* Success State (Post-Redirect) */}
-        {isSuccess ? (
-          <div className="p-8 flex flex-col items-center text-center animate-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
-              <CheckCircle size={32} />
+        <div className="flex-1 overflow-y-auto p-6">
+          
+          {/* STEP 1: SEARCHING (Loading) */}
+          {step === 'search' && (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <Loader2 size={40} className="animate-spin text-brand-600" />
+              <p className="text-gray-500 font-medium animate-pulse">Checking real-time availability...</p>
             </div>
-            <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Did you book it?</h3>
-            <p className="text-gray-500 mb-6 text-sm">
-              If you secured your spot at {hotel.name}, you can now join the {interest} lobby chat!
-            </p>
-            
-            <button 
-              onClick={onConfirm}
-              className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg transition-colors mb-3"
-            >
-              Yes, I'm Booked - Join Lobby
-            </button>
-            <button 
-              onClick={onClose}
-              className="w-full bg-white text-gray-500 font-medium py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
-            >
-              No, still looking
-            </button>
-          </div>
-        ) : (
-          /* Pre-Redirect State */
-          <div>
-            <div className="p-6 overflow-y-auto max-h-[70vh]">
-              
-              {/* Hotel Summary Card */}
-              <div className="flex gap-4 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <img src={hotel.images[0]} alt={hotel.name} className="w-20 h-20 object-cover rounded-lg shadow-sm" />
-                <div>
-                  <h3 className="font-bold text-gray-900">{hotel.name}</h3>
-                  <p className="text-sm text-gray-500 mb-2">{hotel.city}</p>
-                  <div className="inline-flex items-center bg-brand-50 text-brand-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wide border border-brand-100">
-                    <span className="w-1.5 h-1.5 bg-brand-500 rounded-full mr-1.5 animate-pulse"></span>
-                    Joining {hotel.matchingGuestCount} {interest} Fans
-                  </div>
-                </div>
+          )}
+
+          {/* STEP 2: ROOM SELECTION */}
+          {step === 'selection' && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 flex gap-4">
+                 <img src={hotel.images[0]} className="w-16 h-16 rounded-lg object-cover" alt="" />
+                 <div>
+                   <h3 className="font-bold text-gray-900">{hotel.name}</h3>
+                   <div className="flex items-center text-xs text-gray-500 mt-1">
+                      <Calendar size={12} className="mr-1" /> Oct 14 - Oct 17 (3 Nights)
+                   </div>
+                 </div>
               </div>
 
-              {/* Booking Details */}
-              <div className="space-y-5 mb-8">
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide mb-2">Select a Room</h3>
+              {offers.map(offer => (
+                <div 
+                  key={offer.id}
+                  onClick={() => handleSelectOffer(offer)}
+                  className="border border-gray-200 rounded-xl p-4 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-gray-900">{offer.name}</h4>
+                    <span className="font-bold text-brand-600">${offer.price}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3 leading-relaxed">{offer.description}</p>
+                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <span className="flex items-center gap-1"><Bed size={14}/> {offer.bedType}</span>
+                    <span className="flex items-center gap-1"><Users size={14}/> Max {offer.capacity}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* STEP 3: GUEST DETAILS */}
+          {step === 'details' && selectedOffer && (
+            <form onSubmit={handleSubmitDetails} className="space-y-5">
+              <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 flex justify-between items-center">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Estimated Dates</label>
-                  <div className="relative group">
-                    <Calendar size={18} className="absolute left-3.5 top-3.5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                  <div className="text-xs text-brand-700 font-bold uppercase">Selected Room</div>
+                  <div className="font-bold text-gray-900">{selectedOffer.name}</div>
+                </div>
+                <div className="text-xl font-bold text-brand-600">${selectedOffer.price}</div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">First Name</label>
                     <input 
+                      required
                       type="text" 
-                      value={displayDateString} 
-                      readOnly 
-                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 font-medium text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none cursor-not-allowed" 
+                      value={guestDetails.firstName}
+                      onChange={e => setGuestDetails({...guestDetails, firstName: e.target.value})}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                      placeholder="e.g. Alice"
                     />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1 ml-1">Dates can be adjusted on the partner site.</p>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Last Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={guestDetails.lastName}
+                      onChange={e => setGuestDetails({...guestDetails, lastName: e.target.value})}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                      placeholder="e.g. Wonderland"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
+                  <input 
+                    required
+                    type="email" 
+                    value={guestDetails.email}
+                    onChange={e => setGuestDetails({...guestDetails, email: e.target.value})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                    placeholder="alice@example.com"
+                  />
                 </div>
               </div>
 
-              {/* Affiliate Notice */}
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
-                <div className="bg-blue-100 p-1.5 rounded-full text-blue-600 mt-0.5">
-                   <ExternalLink size={14} />
-                </div>
-                <div className="text-xs text-blue-800">
-                  <span className="font-bold block mb-0.5">Booking via Partner</span>
-                  To ensure the best price and secure payment, you will be redirected to Booking.com. 
-                  {!isMobile && " This will open in a new tab."}
-                </div>
-              </div>
+              <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex justify-center items-center">
+                Continue to Payment <ArrowRight size={18} className="ml-2" />
+              </button>
+            </form>
+          )}
+
+          {/* STEP 4: PAYMENT (Duffel Components) */}
+          {step === 'payment' && selectedOffer && (
+            <div className="space-y-6">
+               <div className="text-center mb-6">
+                 <div className="text-3xl font-bold text-gray-900">${selectedOffer.price}</div>
+                 <div className="text-sm text-gray-500">Total due now (Merchant: {hotel.name})</div>
+               </div>
+
+               {/* Container for Duffel Components Iframe */}
+               <div className="bg-white p-1">
+                 <div ref={duffelContainerRef} id="duffel-payment-container" className="min-h-[200px]"></div>
+               </div>
+               
+               {errorMsg && (
+                 <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 animate-in fade-in">
+                   <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                   {errorMsg}
+                 </div>
+               )}
+
+               <button 
+                  onClick={handlePay}
+                  disabled={isLoading}
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all disabled:opacity-50"
+               >
+                 {isLoading ? <Loader2 className="animate-spin" /> : `Pay $${selectedOffer.price} & Book`}
+               </button>
+               
+               <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
+                 <Lock size={10} /> Payments processed securely via Duffel
+               </div>
             </div>
+          )}
 
-            {/* Footer Action - SMART LINKING */}
-            <div className="p-5 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-              <a 
-                href={affiliateLink}
-                // LOGIC: 
-                // Mobile: Target self (undefined) to allow Deep Linking to App without triggering "New Tab + App" bug.
-                // Desktop: Target blank to keep VibeLobby open in background.
-                target={isMobile ? undefined : "_blank"}
-                rel={isMobile ? undefined : "noopener noreferrer"}
-                onClick={handleBookingClick}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all transform active:scale-[0.98] hover:shadow-xl text-center cursor-pointer decoration-0"
+          {/* STEP 5: CONFIRMED */}
+          {step === 'confirmed' && (
+            <div className="flex flex-col items-center text-center py-4">
+              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-in zoom-in duration-500">
+                <CheckCircle size={40} />
+              </div>
+              <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Booking Confirmed!</h3>
+              <p className="text-gray-500 mb-2">You're going to {hotel.city}!</p>
+              
+              <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 mb-8 font-mono text-sm text-gray-600">
+                Ref: <span className="font-bold text-gray-900">{bookingRef}</span>
+              </div>
+
+              <div className="w-full bg-brand-50 border border-brand-100 p-4 rounded-xl mb-6 text-left">
+                <div className="font-bold text-brand-800 text-sm mb-1 flex items-center gap-2">
+                  <ShieldCheck size={16} /> Digital Key Activated
+                </div>
+                <p className="text-xs text-brand-600">
+                  You have been automatically verified. You can now access the {interest} lobby chat.
+                </p>
+              </div>
+
+              <button 
+                onClick={handleFinish}
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center"
               >
-                <span className="flex items-center">
-                   Book on Booking.com <ArrowRight size={18} className="ml-2" />
-                </span>
-              </a>
-              <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400 mt-3 font-medium uppercase tracking-wide">
-                <ShieldCheck size={12} className="text-green-500" /> Official Partner • Best Price Guarantee
-              </div>
+                Join Lobby Chat <ArrowRight size={18} className="ml-2" />
+              </button>
             </div>
-          </div>
-        )}
+          )}
+
+        </div>
       </div>
     </div>
   );

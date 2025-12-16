@@ -1,5 +1,7 @@
 {
   "name": "VibeLobby",
   "description": "A social-first hotel marketplace that sorts destinations by activity density and shared interests rather than just price.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

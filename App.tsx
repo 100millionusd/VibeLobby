@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, AlertTriangle } from 'lucide-react';
-import { ACTIVITIES, MOCK_BOOKINGS, USERS } from './services/mockData';
-import { getHotelsByActivity } from './services/vibeAlgorithm';
+import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut } from 'lucide-react';
+import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
-import { ScoredHotel } from './types';
+import { ScoredHotel, User } from './types';
+import { api } from './services/api';
+import { useAuth } from './contexts/AuthContext';
+// AffiliateDeepLinker removed - we are now an OTA using Duffel
 import SearchCard from './components/SearchCard';
 import LobbyChat from './components/LobbyChat';
 import BookingModal from './components/BookingModal';
 import NotificationToast, { NotificationItem } from './components/NotificationToast';
+import Footer from './components/Footer';
+import CookieBanner from './components/CookieBanner';
+import LegalModal, { LegalPage } from './components/LegalModal';
 
 const App: React.FC = () => {
+  // Auth Context
+  const { user, isLoading: isAuthLoading, login, logout } = useAuth();
+
   // App State
   const [step, setStep] = useState<'home' | 'results' | 'details'>('home');
   
   // Search State
   const [selectedInterest, setSelectedInterest] = useState<string>('');
   const [customInterest, setCustomInterest] = useState<string>('');
-  const [activeSearchTerm, setActiveSearchTerm] = useState<string>(''); // What we actually used for the algorithm (e.g. "Techno")
-  const [displaySearchTerm, setDisplaySearchTerm] = useState<string>(''); // What the user typed (e.g. "Raving")
+  const [activeSearchTerm, setActiveSearchTerm] = useState<string>('');
+  const [displaySearchTerm, setDisplaySearchTerm] = useState<string>('');
   const [aiReasoning, setAiReasoning] = useState<string>('');
   
-  const [selectedCity, setSelectedCity] = useState<string>('Berlin');
+  const [selectedCity, setSelectedCity] = useState<string>('Barcelona');
   const [results, setResults] = useState<ScoredHotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<ScoredHotel | null>(null);
   
@@ -28,18 +36,24 @@ const App: React.FC = () => {
   const [aiForecast, setAiForecast] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // Gallery State (for details view)
+  // Data State (Async Fetched)
+  const [relevantUsers, setRelevantUsers] = useState<User[]>([]);
+  
+  // Gallery State
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
   // Flow State
   const [showBooking, setShowBooking] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
 
+  // Legal Modal State
+  const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
+
   // Notification State
   const [activeNotification, setActiveNotification] = useState<NotificationItem | null>(null);
 
+  // SEARCH HANDLER
   const handleSearch = async () => {
-    // 1. Determine Input
     const hasCustomInput = customInterest.trim().length > 0;
     const hasSelectedPreset = selectedInterest.length > 0;
 
@@ -50,52 +64,69 @@ const App: React.FC = () => {
     let userDisplay = selectedInterest;
     let reasoning = '';
 
-    // 2. AI Mapping Logic (if custom input)
+    // 1. AI Mapping (Vibe Check)
     if (hasCustomInput) {
       userDisplay = customInterest;
-      // Clear preset if custom is typed to avoid confusion
       setSelectedInterest(''); 
-      
       const mappingResult = await findBestMatchingVibe(customInterest, ACTIVITIES);
-      
       if (mappingResult) {
         targetVibe = mappingResult.matchedLabel;
         reasoning = mappingResult.reasoning;
       } else {
-        // Fallback if AI fails or no match: Use the raw input (algorithm will likely find 0 exact matches, but that's correct behavior)
         targetVibe = customInterest; 
       }
     }
 
-    // 3. Execute Search Algorithm
+    // 2. API Call (Async)
     const trimmedCity = selectedCity.trim();
-    // The algorithm now handles generating global results for any city
-    const sortedHotels = getHotelsByActivity(targetVibe, trimmedCity);
-
-    // 4. Update State
-    setResults(sortedHotels);
-    setActiveSearchTerm(targetVibe);
-    setDisplaySearchTerm(userDisplay);
-    setAiReasoning(reasoning);
-    setIsAnalyzing(false);
-    setStep('results');
+    try {
+      const sortedHotels = await api.hotels.search(targetVibe, trimmedCity);
+      setResults(sortedHotels);
+      setActiveSearchTerm(targetVibe);
+      setDisplaySearchTerm(userDisplay);
+      setAiReasoning(reasoning);
+      setStep('results');
+    } catch (error) {
+      console.error("Search failed:", error);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
+  // HOTEL SELECTION HANDLER
   const handleHotelSelect = async (hotel: ScoredHotel) => {
     setSelectedHotel(hotel);
-    setDetailImageIndex(0); // Reset gallery
+    setDetailImageIndex(0);
     setStep('details');
+    
+    // Reset secondary data
+    setRelevantUsers([]);
     setAiForecast('Analyzing crowd data...');
-    const forecast = await generateSocialForecast(hotel, activeSearchTerm);
-    setAiForecast(forecast);
+
+    // Parallel Fetching: Guests & AI Forecast
+    Promise.all([
+      api.hotels.getGuests(hotel.id, activeSearchTerm),
+      generateSocialForecast(hotel, activeSearchTerm)
+    ]).then(([guests, forecast]) => {
+      setRelevantUsers(guests);
+      setAiForecast(forecast);
+    });
   };
 
   const handleBookClick = () => {
-    setShowBooking(true);
+    if (!user) {
+      login(); // Prompt login if trying to book
+    } else {
+      setShowBooking(true);
+    }
   };
 
   const handleDirectBook = (hotel: ScoredHotel) => {
-    setSelectedHotel(hotel);
+    if (!user) {
+       login();
+       return;
+    }
+    handleHotelSelect(hotel); // Ensure data is loaded
     setShowBooking(true);
   };
 
@@ -104,6 +135,7 @@ const App: React.FC = () => {
     setShowLobby(true);
   };
 
+  // UI Helpers
   const nextDetailImage = () => {
     if (!selectedHotel) return;
     setDetailImageIndex((prev) => (prev + 1) % selectedHotel.images.length);
@@ -113,59 +145,81 @@ const App: React.FC = () => {
     if (!selectedHotel) return;
     setDetailImageIndex((prev) => (prev - 1 + selectedHotel.images.length) % selectedHotel.images.length);
   };
-
-  // Helper to get actual users for the selected hotel and interest
-  const getRelevantUsers = () => {
-    if (!selectedHotel || !activeSearchTerm) return [];
-    
-    // If it's a dynamic hotel, we don't have hardcoded users in MOCK_BOOKINGS.
-    // We can just return empty array for the "Who's Here" avatars section 
-    // OR we could generate mock users too. For MVP, showing "12 others" without specific avatars is fine for dynamic hotels.
-    if (selectedHotel.id.startsWith('dyn_')) return [];
-
-    const bookings = MOCK_BOOKINGS.filter(
-      b => b.hotelId === selectedHotel.id && b.primaryInterest === activeSearchTerm
+  
+  // ------------------------------------------------------------------
+  // LOADING SCREEN (App Initialization)
+  // ------------------------------------------------------------------
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg animate-bounce">
+            V
+        </div>
+        <div className="mt-4 flex items-center gap-2 text-gray-500 font-medium">
+           <Loader2 className="animate-spin" size={16} /> Connecting to Web3Auth...
+        </div>
+      </div>
     );
-    
-    const relevantUsers = bookings
-      .map(b => USERS.find(u => u.id === b.userId))
-      .filter((u): u is typeof USERS[0] => !!u);
-      
-    // Deduplicate
-    return Array.from(new Set(relevantUsers.map(u => u.id)))
-      .map(id => relevantUsers.find(u => u.id === id)!);
-  };
+  }
 
-  const relevantUsers = getRelevantUsers();
-
-  // Renders
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 relative">
       
       <NotificationToast 
         notification={activeNotification} 
         onClose={() => setActiveNotification(null)} 
       />
 
+      <CookieBanner />
+
       {/* Navbar */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setStep('home'); setShowLobby(false); setCustomInterest(''); setSelectedInterest(''); }}>
-          
-          {/* LOGO: Reverted to Simple Design */}
           <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm">
             V
           </div>
-
           <span className="font-bold text-xl tracking-tight text-gray-900">VibeLobby</span>
         </div>
-        {step !== 'home' && (
-           <div className="text-xs md:text-sm font-medium bg-gray-100 px-3 py-1 rounded-full truncate max-w-[150px] md:max-w-none">
-             {selectedCity} • {displaySearchTerm}
-           </div>
-        )}
+        
+        <div className="flex items-center gap-3">
+          {step !== 'home' && (
+            <div className="hidden md:block text-sm font-medium bg-gray-100 px-3 py-1 rounded-full text-gray-600">
+              {selectedCity} • {displaySearchTerm}
+            </div>
+          )}
+          
+          {/* User Avatar (Auth State) */}
+          {user ? (
+            <div className="flex items-center gap-3">
+               <div className="text-right hidden sm:block">
+                 <div className="text-xs font-bold text-gray-900">{user.name}</div>
+                 <div className="text-[10px] text-gray-400 font-mono">
+                    {user.walletAddress 
+                      ? `${user.walletAddress.substring(0,6)}...${user.walletAddress.substring(user.walletAddress.length-4)}`
+                      : 'Social Login'}
+                 </div>
+               </div>
+               <button onClick={logout} className="relative group">
+                 <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+                   <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
+                 </div>
+                 <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className="text-xs font-bold flex items-center gap-1 text-red-600"><LogOut size={12}/> Sign Out</div>
+                 </div>
+               </button>
+            </div>
+          ) : (
+            <button 
+              onClick={login}
+              className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-sm"
+            >
+               <LogIn size={16} /> Sign In
+            </button>
+          )}
+        </div>
       </nav>
 
-      <main className="max-w-md mx-auto w-full pt-6 px-4">
+      <main className="max-w-md mx-auto w-full pt-6 px-4 min-h-[85vh]">
         
         {/* VIEW: HOME SEARCH */}
         {step === 'home' && (
@@ -189,7 +243,7 @@ const App: React.FC = () => {
                       key={act.id}
                       onClick={() => {
                         setSelectedInterest(act.label);
-                        setCustomInterest(''); // Clear custom input if preset selected
+                        setCustomInterest('');
                       }}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         selectedInterest === act.label
@@ -222,7 +276,7 @@ const App: React.FC = () => {
                       value={customInterest}
                       onChange={(e) => {
                         setCustomInterest(e.target.value);
-                        if (e.target.value) setSelectedInterest(''); // Clear preset if typing
+                        if (e.target.value) setSelectedInterest('');
                       }}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="e.g. Crossfit, Raving, Pottery..."
@@ -240,7 +294,7 @@ const App: React.FC = () => {
                     type="text"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    placeholder="Enter city (e.g. Berlin)"
+                    placeholder="Try 'Berlin' or 'Bali'..."
                     className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-gray-400"
                   />
                 </div>
@@ -281,15 +335,39 @@ const App: React.FC = () => {
               <span className="text-sm text-gray-500">{results.length} results</span>
             </div>
 
-            {results.map((hotel) => (
-              <SearchCard 
-                key={hotel.id} 
-                hotel={hotel} 
-                searchedInterest={activeSearchTerm}
-                onSelect={handleHotelSelect}
-                onBook={handleDirectBook}
-              />
-            ))}
+            {/* RESULTS OR FALLBACK */}
+            {results.length > 0 ? (
+               results.map((hotel) => (
+                <SearchCard 
+                  key={hotel.id} 
+                  hotel={hotel} 
+                  searchedInterest={activeSearchTerm}
+                  onSelect={handleHotelSelect}
+                  onBook={handleDirectBook}
+                />
+              ))
+            ) : (
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
+                 <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                    <Flag size={40} className="fill-brand-100" />
+                 </div>
+                 <h3 className="text-xl font-extrabold text-gray-900 mb-2">Be the Pioneer in {selectedCity}</h3>
+                 <p className="text-gray-600 mb-8 max-w-xs mx-auto leading-relaxed">
+                   No one has started a <strong>{activeSearchTerm}</strong> lobby here yet. 
+                   <br/><br/>
+                   Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
+                 </p>
+                 <a 
+                   href={`https://www.google.com/search?q=hotels+in+${selectedCity}`}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
+                 >
+                   Search Hotels <ExternalLink size={18} className="ml-2" />
+                 </a>
+              </div>
+            )}
+
           </div>
         )}
 
@@ -369,7 +447,7 @@ const App: React.FC = () => {
             <div className="mb-6">
               <h3 className="font-bold text-lg mb-3">Who's Here?</h3>
               
-              {/* MEMBER AVATARS */}
+              {/* MEMBER AVATARS (Data from Async API) */}
               {relevantUsers.length > 0 ? (
                 <div className="flex items-center mb-4 overflow-x-auto no-scrollbar pb-2">
                   <div className="flex -space-x-3 px-1">
@@ -393,7 +471,6 @@ const App: React.FC = () => {
               ) : (
                 <div className="text-sm text-gray-500 italic mb-4">
                   {selectedHotel.id.startsWith('dyn_') ? (
-                     // Fallback text for dynamic hotels where we don't have user avatars
                      `${selectedHotel.matchingGuestCount} ${activeSearchTerm} fans are checking in this week.`
                   ) : (
                     `Be the first ${activeSearchTerm} fan to join!`
@@ -449,6 +526,8 @@ const App: React.FC = () => {
         )}
 
       </main>
+
+      <Footer onOpenLegal={(page) => setLegalPage(page)} />
       
       {/* OVERLAY: BOOKING MODAL */}
       {showBooking && selectedHotel && (
@@ -461,13 +540,21 @@ const App: React.FC = () => {
       )}
 
       {/* OVERLAY: LOBBY CHAT */}
-      {showLobby && selectedHotel && (
+      {showLobby && selectedHotel && user && (
         <LobbyChat 
           hotel={selectedHotel} 
           interest={activeSearchTerm} 
+          currentUser={user}
+          // Pass the relevant users we fetched earlier to the lobby
+          initialMembers={relevantUsers}
           onClose={() => setShowLobby(false)} 
           onNotify={setActiveNotification}
         />
+      )}
+
+      {/* OVERLAY: LEGAL MODAL */}
+      {legalPage && (
+        <LegalModal page={legalPage} onClose={() => setLegalPage(null)} />
       )}
 
     </div>
