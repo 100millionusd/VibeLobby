@@ -369,14 +369,15 @@ const App: React.FC = () => {
                   <br /><br />
                   Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
                 </p>
-                <a
-                  href={`https://www.google.com/search?q=hotels+in+${selectedCity}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
+                    window.location.href = checkoutUrl;
+                  }}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Search Hotels <ExternalLink size={18} className="ml-2" />
-                </a>
+                  Search on Duffel <ExternalLink size={18} className="ml-2" />
+                </button>
               </div>
             )}
 
