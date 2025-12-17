@@ -117,9 +117,7 @@ const App: React.FC = () => {
     if (!user) {
       login(); // Prompt login if trying to book
     } else {
-      // Redirect to Duffel Checkout (Production)
-      const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
-      window.location.href = checkoutUrl;
+      setShowBooking(true);
     }
   };
 
@@ -128,9 +126,8 @@ const App: React.FC = () => {
       login();
       return;
     }
-    // Redirect to Duffel Checkout (Production)
-    const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
-    window.location.href = checkoutUrl;
+    setSelectedHotel(hotel);
+    setShowBooking(true);
   };
 
   const handleBookingConfirm = () => {
