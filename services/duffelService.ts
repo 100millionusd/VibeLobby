@@ -67,8 +67,21 @@ export const duffelService = {
 
     } catch (error) {
       console.error("Duffel API Error:", error);
-      return [];
+      return this.getMockOffers(hotel);
     }
+  },
+
+  getMockOffers: (hotel: ScoredHotel): RoomOffer[] => {
+    return ROOM_TYPES.map((type, index) => ({
+      id: `offer_${hotel.id}_${index}`,
+      name: type.name,
+      description: type.desc,
+      price: Math.round(hotel.pricePerNight * type.multiplier),
+      currency: 'USD',
+      cancellationPolicy: 'refundable',
+      bedType: type.beds,
+      capacity: 2
+    }));
   },
 
   /**
