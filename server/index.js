@@ -23,9 +23,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Initialize Duffel Client
-const duffel = new Duffel({
-    token: process.env.DUFFEL_ACCESS_TOKEN,
-});
+const duffelToken = process.env.DUFFEL_ACCESS_TOKEN;
+let duffel;
+if (duffelToken) {
+    duffel = new Duffel({
+        token: duffelToken,
+    });
+} else {
+    console.warn("WARNING: DUFFEL_ACCESS_TOKEN is missing. Hotel API will fail.");
+}
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -40,6 +46,6 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port} (0.0.0.0)`);
 });
