@@ -168,6 +168,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('vibe_user', JSON.stringify(updatedUser));
   };
 
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user) return;
+
+    // 1. Optimistic Update
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    localStorage.setItem('vibe_user', JSON.stringify(updatedUser));
+
+    // 2. Persist to Backend
+    try {
+      await api.auth.updateProfile(user.id, {
+        name: updates.name,
+        bio: updates.bio,
+        avatar: updates.avatar
+      });
+    } catch (err) {
+      console.error("Failed to persist profile update", err);
+      // Optionally revert state here if critical
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -175,7 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       login,
       logout,
-      grantDigitalKey
+      grantDigitalKey,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>
