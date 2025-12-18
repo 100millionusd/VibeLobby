@@ -42,7 +42,8 @@ export const duffelService = {
 
       const searchData = await searchRes.json();
       if (!searchData.results || searchData.results.length === 0) {
-        return [];
+        console.warn("Duffel API returned no results. Using mock data.");
+        return this.getMockOffers(hotel);
       }
 
       // 2. Get rates for the first result (Best Match)
