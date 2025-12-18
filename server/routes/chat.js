@@ -9,7 +9,7 @@ router.post('/send', async (req, res) => {
     try {
         const { hotelId, text, user, isPrivate, image, recipientId } = req.body;
 
-        console.log("Received /send request:", { hotelId, hasText: !!text, hasImage: !!image, userId: user?.id, isPrivate, recipientId });
+
 
         if (!hotelId || (!text && !image) || !user || !user.id) {
             console.error("Missing required fields:", { hotelId, text, image, user });

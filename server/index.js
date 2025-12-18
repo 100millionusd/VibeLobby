@@ -75,10 +75,6 @@ const serveIndex = (req, res) => {
         // Inject Runtime Environment Variables
         const vapidKey = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
 
-        console.log("Injecting Runtime Env:");
-        console.log("  VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "Set" : "Missing");
-        console.log("  VITE_VAPID_PUBLIC_KEY:", vapidKey ? "Set" : "Missing");
-
         const envScript = `
           <script>
             window.__ENV__ = {
