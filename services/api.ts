@@ -147,8 +147,9 @@ export const api = {
     },
 
     subscribeToLobby: (hotelId: string, onMessage: (msg: ChatMessage) => void) => {
-      return supabase
-        .channel(`lobby:${hotelId}`)
+      const channel = supabase.channel(`lobby:${hotelId}`);
+
+      channel
         .on('postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotelId}` },
           (payload) => {
@@ -169,6 +170,8 @@ export const api = {
           }
         )
         .subscribe();
+
+      return channel;
     }
   },
 
