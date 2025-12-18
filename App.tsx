@@ -13,6 +13,7 @@ import NotificationToast, { NotificationItem } from './components/NotificationTo
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 import LegalModal, { LegalPage } from './components/LegalModal';
+import ProfileModal from './components/ProfileModal';
 
 const App: React.FC = () => {
   // Auth Context
@@ -45,6 +46,7 @@ const App: React.FC = () => {
   // Flow State
   const [showBooking, setShowBooking] = useState(false);
   const [showLobby, setShowLobby] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   // Legal Modal State
   const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
@@ -204,17 +206,14 @@ const App: React.FC = () => {
                     : 'Social Login'}
                 </div>
               </div>
-              <button onClick={logout} className="relative group">
-                <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+              <button onClick={() => setShowProfile(true)} className="relative group">
+                <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300 hover:ring-2 hover:ring-brand-200 transition-all">
                   <img
                     src={user.avatar}
                     alt="Me"
                     className="w-full h-full object-cover"
                     onError={handleImageError}
                   />
-                </div>
-                <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="text-xs font-bold flex items-center gap-1 text-red-600"><LogOut size={12} /> Sign Out</div>
                 </div>
               </button>
             </div>
@@ -568,6 +567,11 @@ const App: React.FC = () => {
         <LegalModal page={legalPage} onClose={() => setLegalPage(null)} />
       )}
 
+      {/* OVERLAY: PROFILE MODAL */}
+      {showProfile && (
+        <ProfileModal onClose={() => setShowProfile(false)} />
+      )}
+
       {/* FLOATING CHAT BUTTON */}
       {user && !showLobby && (
         <button
@@ -587,7 +591,7 @@ const App: React.FC = () => {
                 rating: 5,
                 amenities: [],
                 coordinates: { lat: 0, lng: 0 },
-                matchScore: 100,
+                vibeScore: 100,
                 matchingGuestCount: 0,
                 totalGuestCount: 0,
                 topInterests: []
@@ -607,7 +611,7 @@ const App: React.FC = () => {
                 rating: 5,
                 amenities: [],
                 coordinates: { lat: 0, lng: 0 },
-                matchScore: 0,
+                vibeScore: 0,
                 matchingGuestCount: 0,
                 totalGuestCount: 0,
                 topInterests: []

@@ -105,6 +105,7 @@ export interface AuthContextType {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   grantDigitalKey: (confirmation: BookingConfirmationResponse) => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 }
 
 // DUFFEL / DIRECT BOOKING TYPES

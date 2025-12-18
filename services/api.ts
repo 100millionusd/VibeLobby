@@ -59,6 +59,18 @@ export const api = {
 
     logout: async () => {
       localStorage.removeItem('vibe_user');
+    },
+
+    updateProfile: async (userId: string, updates: { name?: string; bio?: string; avatar?: string }) => {
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', userId);
+
+      if (error) {
+        console.error("Failed to update profile:", error);
+        throw error;
+      }
     }
   },
 
