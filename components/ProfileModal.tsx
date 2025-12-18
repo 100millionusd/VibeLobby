@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User as UserIcon, LogOut, Save, Loader2 } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileModalProps {
@@ -32,6 +32,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
         onClose();
     };
 
+    const handleShuffleAvatar = () => {
+        const newSeed = Math.random().toString(36).substring(7);
+        const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${newSeed}`;
+        updateUser({ avatar: newAvatar });
+    };
+
     if (!user) return null;
 
     return (
@@ -51,15 +57,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                 {/* Body */}
                 <div className="p-6">
                     <div className="flex flex-col items-center mb-6">
-                        <div className="relative group">
+                        <div className="relative group cursor-pointer" onClick={handleShuffleAvatar}>
                             <img
                                 src={user.avatar}
                                 alt={user.name}
-                                className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover"
+                                className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
                             />
-                            {/* Future: Add avatar upload overlay here */}
+                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <RefreshCw className="text-white" size={24} />
+                            </div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 font-mono">{user.walletAddress ? 'Wallet Connected' : 'Social Login'}</p>
+                        <p className="text-xs text-gray-400 mt-2 font-mono flex items-center gap-1">
+                            {user.walletAddress ? 'Wallet Connected' : 'Social Login'}
+                            <span className="text-gray-300">•</span>
+                            <button onClick={handleShuffleAvatar} className="hover:text-brand-600 underline">Shuffle Avatar</button>
+                        </p>
                     </div>
 
                     <div className="space-y-4">

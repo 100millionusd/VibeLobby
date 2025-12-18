@@ -87,11 +87,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 4. Construct User Object
+      // User requested "hide behind avatars" - so we ignore social login photos by default
+      // and use a consistent generated avatar style (Avataaars).
+      const seed = userInfo.verifierId || address || 'unknown_user';
       const newUser: User = {
-        id: userInfo.verifierId || address || 'unknown_user',
+        id: seed,
         name: userInfo.name || 'Anonymous Vibe',
         email: userInfo.email,
-        avatar: userInfo.profileImage || `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`,
         bio: 'Just vibing on-chain',
         walletAddress: address,
         verifier: userInfo.verifier,

@@ -36,10 +36,11 @@ export const api = {
     },
 
     loginAsGuest: async (): Promise<User> => {
+      const guestId = `guest_${Date.now()}`;
       const guestUser: User = {
-        id: `guest_${Date.now()}`,
+        id: guestId,
         name: 'Guest Explorer',
-        avatar: 'https://i.pravatar.cc/150?u=me_guest',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${guestId}`,
         bio: 'Just vibing',
         isGuest: true,
         digitalKeys: []
