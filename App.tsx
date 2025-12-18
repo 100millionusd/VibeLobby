@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut } from 'lucide-react';
+import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
 import { ScoredHotel, User } from './types';
@@ -566,6 +566,68 @@ const App: React.FC = () => {
       {/* OVERLAY: LEGAL MODAL */}
       {legalPage && (
         <LegalModal page={legalPage} onClose={() => setLegalPage(null)} />
+      )}
+
+      {/* FLOATING CHAT BUTTON */}
+      {user && !showLobby && (
+        <button
+          onClick={() => {
+            // 1. Try to find an active hotel from digital keys
+            const activeKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
+
+            if (activeKey) {
+              // Construct a minimal hotel object from the key
+              const restoredHotel: ScoredHotel = {
+                id: activeKey.hotelId,
+                name: activeKey.hotelName,
+                city: 'Your Stay',
+                description: '',
+                images: [],
+                pricePerNight: 0,
+                rating: 5,
+                amenities: [],
+                coordinates: { lat: 0, lng: 0 },
+                matchScore: 100,
+                matchingGuestCount: 0,
+                totalGuestCount: 0,
+                topInterests: []
+              };
+              setSelectedHotel(restoredHotel);
+              setActiveSearchTerm('General'); // Default vibe
+              setShowLobby(true);
+            } else {
+              // No active key? Open a generic "Vibe Lobby" (which will be locked, but private chats work)
+              const genericHotel: ScoredHotel = {
+                id: 'global_lobby',
+                name: 'Vibe Lobby',
+                city: 'Global',
+                description: 'Connect with your vibe tribe.',
+                images: [],
+                pricePerNight: 0,
+                rating: 5,
+                amenities: [],
+                coordinates: { lat: 0, lng: 0 },
+                matchScore: 0,
+                matchingGuestCount: 0,
+                totalGuestCount: 0,
+                topInterests: []
+              };
+              setSelectedHotel(genericHotel);
+              setActiveSearchTerm('Global');
+              setShowLobby(true);
+            }
+          }}
+          className="fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2 animate-in zoom-in duration-300"
+        >
+          <div className="relative">
+            <MessageCircle size={28} />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </span>
+          </div>
+          <span className="font-bold pr-1 hidden md:inline">Chats</span>
+        </button>
       )}
 
     </div>
