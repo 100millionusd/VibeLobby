@@ -11,7 +11,7 @@ const CLIENT_ID = import.meta.env.VITE_WEB3AUTH_CLIENT_ID || "BFqTPKi0dxXvTnq32q
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0x1", // Mainnet
-  rpcTarget: "https://api.web3auth.io/infura-service/v1/0x1/BFqTPKi0dxXvTnq32q42HWYrGUwOSaiFaiNz1ELOT1lqOLoHiwd6yCZ5wm8F_P_4aq7EKQgDhanfttNw5n14y1M",
+  rpcTarget: `https://api.web3auth.io/infura-service/v1/0x1/${CLIENT_ID}`,
   displayName: "Ethereum Mainnet",
   blockExplorerUrl: "https://etherscan.io",
   ticker: "ETH",
@@ -26,6 +26,7 @@ export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
   web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
   privateKeyProvider,
+  sessionTime: 86400, // 1 day
   uiConfig: {
     appName: "VibeLobby",
     mode: "light",
