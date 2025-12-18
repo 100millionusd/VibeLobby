@@ -114,20 +114,39 @@ export const api = {
     },
 
     sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string): Promise<ChatMessage> => {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({
-          hotel_id: hotelId,
-          user_id: user.id,
-          user_name: user.name,
-          user_avatar: user.avatar,
-          text: text,
-          image: image || null,
-          is_private: isPrivate,
-          recipient_id: isPrivate ? 'todo_fix_recipient' : null // Ideally pass recipientId
-        })
-        .select()
-        .single();
+      const insertMessage = async () => {
+        return await supabase
+          .from('messages')
+          .insert({
+            hotel_id: hotelId,
+            user_id: user.id,
+            user_name: user.name,
+            user_avatar: user.avatar,
+            text: text,
+            image: image || null,
+            is_private: isPrivate,
+            recipient_id: isPrivate ? 'todo_fix_recipient' : null
+          })
+          .select()
+          .single();
+      };
+
+      let { data, error } = await insertMessage();
+
+      // Self-Healing: If user missing (Foreign Key Violation), sync user and retry
+      if (error && error.code === '23503') {
+        console.warn("User missing in DB. Syncing now...", user.id);
+        await supabase.from('users').upsert({
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar,
+          bio: user.bio
+        });
+        // Retry
+        const retry = await insertMessage();
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) {
         console.error("Error sending message:", error);
