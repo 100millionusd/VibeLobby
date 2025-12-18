@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Duffel } from '@duffel/api';
 import hotelRoutes from './routes/hotels.js';
+import chatRoutes from './routes/chat.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/hotels', hotelRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Helper to serve index.html with Runtime Injection
 import fs from 'fs';

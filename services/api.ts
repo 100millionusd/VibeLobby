@@ -114,44 +114,25 @@ export const api = {
     },
 
     sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string): Promise<ChatMessage> => {
-      const insertMessage = async () => {
-        return await supabase
-          .from('messages')
-          .insert({
-            hotel_id: hotelId,
-            user_id: user.id,
-            user_name: user.name,
-            user_avatar: user.avatar,
-            text: text,
-            image: image || null,
-            is_private: isPrivate,
-            recipient_id: isPrivate ? 'todo_fix_recipient' : null
-          })
-          .select()
-          .single();
-      };
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotelId,
+          text,
+          user,
+          isPrivate,
+          image
+        })
+      });
 
-      let { data, error } = await insertMessage();
-
-      // Self-Healing: If user missing (Foreign Key Violation), sync user and retry
-      if (error && error.code === '23503') {
-        console.warn("User missing in DB. Syncing now...", user.id);
-        await supabase.from('users').upsert({
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar,
-          bio: user.bio
-        });
-        // Retry
-        const retry = await insertMessage();
-        data = retry.data;
-        error = retry.error;
+      if (!response.ok) {
+        const err = await response.json();
+        console.error("Error sending message:", err);
+        throw new Error(err.error || "Failed to send message");
       }
 
-      if (error) {
-        console.error("Error sending message:", error);
-        throw error;
-      }
+      const data = await response.json();
 
       return {
         id: data.id,
@@ -193,34 +174,18 @@ export const api = {
 
   nudge: {
     sendNudge: async (fromUserId: string, toUserId: string): Promise<Nudge> => {
-      // Check existing
-      const { data: existing } = await supabase
-        .from('nudges')
-        .select('*')
-        .or(`and(from_user_id.eq.${fromUserId},to_user_id.eq.${toUserId}),and(from_user_id.eq.${toUserId},to_user_id.eq.${fromUserId})`)
-        .single();
+      const response = await fetch('/api/chat/nudge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromUserId, toUserId })
+      });
 
-      if (existing) {
-        return {
-          id: existing.id,
-          fromUserId: existing.from_user_id,
-          toUserId: existing.to_user_id,
-          status: existing.status,
-          timestamp: new Date(existing.created_at).getTime()
-        };
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to send nudge");
       }
 
-      const { data, error } = await supabase
-        .from('nudges')
-        .insert({
-          from_user_id: fromUserId,
-          to_user_id: toUserId,
-          status: 'pending'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await response.json();
 
       return {
         id: data.id,
