@@ -110,6 +110,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
         (payload) => {
           const m = payload.new as any;
+          console.log("Realtime Message Received:", m);
+          console.log("Current User:", currentUser.id);
+          console.log("Is Private:", m.is_private);
+          console.log("Recipient:", m.recipient_id);
           const newMsg: ChatMessage = {
             id: m.id,
             userId: m.user_id,
