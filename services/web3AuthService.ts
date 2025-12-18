@@ -22,7 +22,7 @@ const privateKeyProvider = new EthereumPrivateKeyProvider({
   config: { chainConfig }
 });
 
-import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
+import { AuthAdapter } from "@web3auth/auth-adapter";
 
 export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
@@ -40,7 +40,7 @@ export const web3auth = new Web3Auth({
   },
 });
 
-const openloginAdapter = new OpenloginAdapter({
+const authAdapter = new AuthAdapter({
   adapterSettings: {
     uxMode: "redirect", // Critical for mobile support
     whiteLabel: {
@@ -51,7 +51,7 @@ const openloginAdapter = new OpenloginAdapter({
   privateKeyProvider
 });
 
-web3auth.configureAdapter(openloginAdapter as any);
+web3auth.configureAdapter(authAdapter);
 
 export const initWeb3Auth = async () => {
   try {
