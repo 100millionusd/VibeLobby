@@ -72,6 +72,28 @@ export const api = {
         console.error("Failed to update profile:", error);
         throw error;
       }
+    },
+
+    getUser: async (userId: string): Promise<User | null> => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) return null;
+
+      return {
+        id: data.id,
+        name: data.name,
+        avatar: data.avatar,
+        bio: data.bio,
+        email: '', // Supabase users table might not have email, or we don't need it here
+        walletAddress: '', // We might need to store this if we want to retrieve it
+        verifier: '',
+        isGuest: false,
+        digitalKeys: [] // Keys are stored separately or in local storage for now
+      };
     }
   },
 

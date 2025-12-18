@@ -90,12 +90,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // User requested "hide behind avatars" - so we ignore social login photos by default
       // and use a consistent generated avatar style (Avataaars).
       const seed = userInfo.verifierId || address || 'unknown_user';
+      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+      let name = userInfo.name || 'Anonymous Vibe';
+      let bio = 'Just vibing on-chain';
+
+      // 4a. Check if we have a persisted profile in Supabase
+      // This ensures we don't overwrite custom avatars with the generated one on every login
+      try {
+        const remoteProfile = await api.auth.getUser(seed);
+        if (remoteProfile) {
+          if (remoteProfile.avatar) avatar = remoteProfile.avatar;
+          if (remoteProfile.name) name = remoteProfile.name;
+          if (remoteProfile.bio) bio = remoteProfile.bio;
+        } else {
+          // Fallback to local storage if API fails or user not found (offline support)
+          if (stored) {
+            const storedUser = JSON.parse(stored);
+            if (storedUser.id === seed) {
+              if (storedUser.avatar) avatar = storedUser.avatar;
+              if (storedUser.name) name = storedUser.name;
+              if (storedUser.bio) bio = storedUser.bio;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch remote profile, falling back to local/default", err);
+        // Fallback to local storage
+        if (stored) {
+          const storedUser = JSON.parse(stored);
+          if (storedUser.id === seed) {
+            if (storedUser.avatar) avatar = storedUser.avatar;
+            if (storedUser.name) name = storedUser.name;
+            if (storedUser.bio) bio = storedUser.bio;
+          }
+        }
+      }
+
       const newUser: User = {
         id: seed,
-        name: userInfo.name || 'Anonymous Vibe',
+        name: name,
         email: userInfo.email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`,
-        bio: 'Just vibing on-chain',
+        avatar: avatar,
+        bio: bio,
         walletAddress: address,
         verifier: userInfo.verifier,
         isGuest: false,
@@ -105,6 +141,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const checkedUser = checkExpiredKeys(newUser) || newUser;
       setUser(checkedUser);
       localStorage.setItem('vibe_user', JSON.stringify(checkedUser));
+
+      // Ensure the user exists in Supabase (upsert)
+      // We do this AFTER setting state to ensure UI is responsive
+      api.auth.getSession(); // This triggers the upsert logic in api.ts
 
     } catch (e) {
       console.error("Login Processing Error:", e);
