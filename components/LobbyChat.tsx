@@ -147,49 +147,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       }
     });
 
-    // Presence Logic
-    const presenceTrack = async () => {
-      await channel.track({
-        user_id: currentUser.id,
-        name: currentUser.name,
-        avatar: currentUser.avatar,
-        bio: currentUser.bio,
-        online_at: new Date().toISOString()
-      });
-    };
 
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      const onlineUsers: User[] = [];
-
-      for (const id in state) {
-        const presence = state[id][0] as any;
-        onlineUsers.push({
-          id: presence.user_id,
-          name: presence.name,
-          avatar: presence.avatar,
-          bio: presence.bio,
-          digitalKeys: [], // Placeholder
-          isGuest: false
-        });
-      }
-
-      // Merge Real Users with Mock Users (deduplicated)
-      // We prioritize Real Users
-      const realUserIds = new Set(onlineUsers.map(u => u.id));
-      const filteredMocks = initialMembers.filter(m => !realUserIds.has(m.id));
-
-      // Update a new state for display (we need to add this state variable)
-      // For now, let's just log it or we need to refactor state.
-      // actually, let's update a new state 'onlineMembers'
-      setOnlineMembers([...onlineUsers, ...filteredMocks]);
-    });
-
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceTrack();
-      }
-    });
 
     // Load Nudges
     const loadNudges = async () => {
