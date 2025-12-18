@@ -113,6 +113,31 @@ export const api = {
       }));
     },
 
+    getPrivateHistory: async (userId: string, otherUserId: string): Promise<ChatMessage[]> => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('is_private', true)
+        .or(`and(user_id.eq.${userId},recipient_id.eq.${otherUserId}),and(user_id.eq.${otherUserId},recipient_id.eq.${userId})`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error("Error fetching private chat:", error);
+        return [];
+      }
+
+      return data.map((m: any) => ({
+        id: m.id,
+        userId: m.user_id,
+        userName: m.user_name,
+        userAvatar: m.user_avatar,
+        text: m.text,
+        image: m.image,
+        timestamp: new Date(m.created_at).getTime(),
+        isAi: false
+      }));
+    },
+
     sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string, recipientId?: string): Promise<ChatMessage> => {
       const response = await fetch('/api/chat/send', {
         method: 'POST',

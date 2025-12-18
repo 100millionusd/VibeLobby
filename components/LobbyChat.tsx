@@ -67,6 +67,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   // PRESENCE STATE
   const [onlineMembers, setOnlineMembers] = useState<User[]>(initialMembers);
+  const [recentContacts, setRecentContacts] = useState<User[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<string>('CONNECTING');
 
   // CHAT STATE
@@ -99,6 +100,11 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           isAi: true
         }]);
       }
+    });
+
+    // Load Recent Contacts (Offline Access)
+    api.chat.getRecentContacts(currentUser.id).then(contacts => {
+      setRecentContacts(contacts);
     });
 
     // UNIFIED CHANNEL LOGIC
@@ -440,8 +446,12 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       // Open Chat
       setSelectedPrivateUser(user);
       setActiveView('private');
-      if (!privateMessages[user.id]) setPrivateMessages(prev => ({ ...prev, [user.id]: [] }));
       setPendingNudgeUser(null);
+
+      // Load Private History
+      api.chat.getPrivateHistory(currentUser.id, user.id).then(msgs => {
+        setPrivateMessages(prev => ({ ...prev, [user.id]: msgs }));
+      });
     } else {
       // Open Nudge Prompt
       setPendingNudgeUser(user);
@@ -508,8 +518,15 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     : (selectedPrivateUser ? privateMessages[selectedPrivateUser.id] || [] : []);
 
 
+  // MERGE & DEDUPE MEMBERS
+  const allDisplayUsers = [...onlineMembers];
+  recentContacts.forEach(c => {
+    if (!allDisplayUsers.find(u => u.id === c.id)) {
+      allDisplayUsers.push(c);
+    }
+  });
 
-  const displayMembers = onlineMembers.slice(0, 6);
+  const displayMembers = allDisplayUsers.slice(0, 10); // Show more users now
 
   // --- RENDER: GEO-GATE ---
   if (!isAccessGranted) {
@@ -752,16 +769,17 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               // Check if there is a pending nudge from this user
               const hasIncoming = nudges.some(n => n.fromUserId === user.id && n.toUserId === currentUser.id && n.status === 'pending');
               const isAccepted = nudges.some(n => (n.fromUserId === user.id && n.toUserId === currentUser.id) || (n.fromUserId === currentUser.id && n.toUserId === user.id) && n.status === 'accepted');
+              const isOnline = onlineMembers.some(u => u.id === user.id);
 
               return (
                 <button
                   key={user.id}
                   onClick={() => handleUserClick(user)}
-                  className="relative shrink-0 group flex flex-col items-center gap-1"
+                  className={`relative shrink-0 group flex flex-col items-center gap-1 ${!isOnline ? 'opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100' : ''}`}
                 >
                   <div className="relative">
                     <img src={user.avatar} className={`w-10 h-10 object-cover rounded-full border-2 transition-colors ${user.id === currentUser.id ? 'border-green-400' : hasIncoming ? 'border-yellow-400 animate-pulse' : isAccepted ? 'border-blue-300' : 'border-brand-400 group-hover:border-white'}`} alt={user.name} />
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 border-2 border-brand-600 rounded-full"></div>
+                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-brand-600 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                     {hasIncoming && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">!</div>}
                   </div>
                   <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? 'You' : user.name}</span>
