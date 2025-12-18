@@ -22,6 +22,8 @@ const privateKeyProvider = new EthereumPrivateKeyProvider({
   config: { chainConfig }
 });
 
+import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
+
 export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
   web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
@@ -37,6 +39,19 @@ export const web3auth = new Web3Auth({
     defaultLanguage: "en",
   },
 });
+
+const openloginAdapter = new OpenloginAdapter({
+  adapterSettings: {
+    uxMode: "redirect", // Critical for mobile support
+    whiteLabel: {
+      appName: "VibeLobby",
+      theme: { primary: "#e11d48" }
+    }
+  },
+  privateKeyProvider
+});
+
+web3auth.configureAdapter(openloginAdapter);
 
 export const initWeb3Auth = async () => {
   try {
