@@ -81,13 +81,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   // 1. INITIAL LOAD
   // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
-  import { supabase } from '../services/supabaseClient';
 
-  // ... (keep existing imports)
-
-  // ... (inside LobbyChat component)
-
-  // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
   useEffect(() => {
     // Load history
     api.chat.getHistory(hotel.id).then(msgs => {
