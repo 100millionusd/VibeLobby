@@ -7,10 +7,14 @@ const router = express.Router();
 // Securely send a message to the lobby
 router.post('/send', async (req, res) => {
     try {
-        const { hotelId, text, user, isPrivate, image } = req.body;
+        const { hotelId, text, user, isPrivate, image, recipientId } = req.body;
 
         if (!hotelId || !text || !user || !user.id) {
             return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        if (isPrivate && !recipientId) {
+            return res.status(400).json({ error: "Missing recipient for private message" });
         }
 
         // 1. Ensure User Exists (Sync)
@@ -38,7 +42,7 @@ router.post('/send', async (req, res) => {
                 text: text,
                 image: image || null,
                 is_private: isPrivate,
-                recipient_id: isPrivate ? 'todo_fix_recipient' : null
+                recipient_id: isPrivate ? recipientId : null
             })
             .select()
             .single();

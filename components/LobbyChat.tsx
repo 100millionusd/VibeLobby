@@ -110,21 +110,43 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
         (payload) => {
           const m = payload.new as any;
+          const newMsg: ChatMessage = {
+            id: m.id,
+            userId: m.user_id,
+            userName: m.user_name,
+            userAvatar: m.user_avatar,
+            text: m.text,
+            image: m.image,
+            timestamp: new Date(m.created_at).getTime(),
+            isAi: false
+          };
+
           if (!m.is_private) {
-            const newMsg: ChatMessage = {
-              id: m.id,
-              userId: m.user_id,
-              userName: m.user_name,
-              userAvatar: m.user_avatar,
-              text: m.text,
-              image: m.image,
-              timestamp: new Date(m.created_at).getTime(),
-              isAi: false
-            };
             setLobbyMessages(prev => {
               if (prev.find(msg => msg.id === newMsg.id)) return prev;
               return [...prev, newMsg];
             });
+          } else {
+            // Handle Private Message
+            // If I am the sender, add to my chat with recipient
+            if (m.user_id === currentUser.id && m.recipient_id) {
+              setPrivateMessages(prev => ({
+                ...prev,
+                [m.recipient_id]: [...(prev[m.recipient_id] || []), newMsg]
+              }));
+            }
+            // If I am the recipient, add to my chat with sender
+            else if (m.recipient_id === currentUser.id) {
+              setPrivateMessages(prev => ({
+                ...prev,
+                [m.user_id]: [...(prev[m.user_id] || []), newMsg]
+              }));
+
+              // Optional: Notify if not currently viewing this chat
+              if (activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
+                // We could trigger a toast here, but let's rely on the Nudge/Notification system or just the red dot
+              }
+            }
           }
         }
       )
@@ -383,17 +405,15 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     setInput('');
     setPendingImage(null);
 
-    const newMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage);
+    const recipientId = isPrivate && selectedPrivateUser ? selectedPrivateUser.id : undefined;
+    const newMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
 
-    if (activeView === 'lobby') {
-      setLobbyMessages(prev => {
-        if (prev.find(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
-    } else if (activeView === 'private' && selectedPrivateUser) {
-      const otherUserId = selectedPrivateUser.id;
-      setPrivateMessages(prev => ({ ...prev, [otherUserId]: [...(prev[otherUserId] || []), newMsg] }));
-    }
+    // Optimistic update is handled by the subscription now, but we can keep it for instant feedback
+    // actually, let's rely on subscription to avoid duplicates or use a check
+    // For now, let's NOT manually update state here, and let the subscription handle it.
+    // This ensures we only show messages that actually made it to the server.
+    // BUT, for better UX, we might want optimistic updates. 
+    // Let's stick to subscription-driven for consistency first.
   };
 
   const currentMessages = activeView === 'lobby'

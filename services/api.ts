@@ -113,7 +113,7 @@ export const api = {
       }));
     },
 
-    sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string): Promise<ChatMessage> => {
+    sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string, recipientId?: string): Promise<ChatMessage> => {
       const response = await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,7 +122,8 @@ export const api = {
           text,
           user,
           isPrivate,
-          image
+          image,
+          recipientId
         })
       });
 
