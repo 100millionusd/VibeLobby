@@ -3,6 +3,7 @@ import { ScoredHotel, RoomOffer, GuestDetails } from '../types';
 import { X, Calendar, CheckCircle, ShieldCheck, ArrowRight, Bed, Users, CreditCard, Loader2, ChevronLeft, Lock, AlertCircle } from 'lucide-react';
 import { duffelService } from '../services/duffelService';
 import { useAuth } from '../contexts/AuthContext';
+import { getEnv } from '../utils/env';
 
 interface BookingModalProps {
   hotel: ScoredHotel;
@@ -52,10 +53,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
 
     fetchOffers();
   }, [hotel]);
-
-  import { getEnv } from '../utils/env';
-
-  // ... imports
 
   // 2. Initialize Duffel Components when reaching payment step
   useEffect(() => {
