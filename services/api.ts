@@ -1,191 +1,238 @@
 import { ScoredHotel, User, ChatMessage, Nudge } from '../types';
 import { getHotelsByActivity } from './vibeAlgorithm';
 import { MOCK_BOOKINGS, USERS } from './mockData';
+import { supabase } from './supabaseClient';
 
-// Helper to simulate network latency (300-800ms) - essential for testing loading states
+// Helper to simulate network latency (optional now, but good for UX feel)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// --- IN-MEMORY DATABASE (Simulates Backend) ---
-const DB = {
-  messages: {} as Record<string, ChatMessage[]>, // hotelId -> messages[]
-  nudges: [] as Nudge[]
-};
 
 /**
  * PRODUCTION READY API LAYER
  * 
- * This object mimics a real backend client (like SupabaseClient).
- * Currently, it wraps our local algorithms and mock data in async functions.
- * When ready for production, we simply replace the body of these functions 
- * to call the real database, without breaking the UI.
+ * Now integrated with Supabase for persistence.
  */
 export const api = {
-  
+
   auth: {
-    /**
-     * Get the current session. 
-     * In production: supabase.auth.getSession()
-     */
     getSession: async (): Promise<User | null> => {
-      await delay(500); // Simulate check
       const stored = localStorage.getItem('vibe_user');
       return stored ? JSON.parse(stored) : null;
     },
 
-    /**
-     * Login anonymously or as a specific user type.
-     */
     loginAsGuest: async (): Promise<User> => {
-      await delay(600);
       const guestUser: User = {
         id: `guest_${Date.now()}`,
         name: 'Guest Explorer',
         avatar: 'https://i.pravatar.cc/150?u=me_guest',
         bio: 'Just vibing',
         isGuest: true,
-        digitalKeys: [] // Initialize empty keys
+        digitalKeys: []
       };
+
+      // Sync guest to Supabase Users table
+      await supabase.from('users').upsert({
+        id: guestUser.id,
+        name: guestUser.name,
+        avatar: guestUser.avatar,
+        bio: guestUser.bio
+      });
+
       localStorage.setItem('vibe_user', JSON.stringify(guestUser));
       return guestUser;
     },
 
     logout: async () => {
-      await delay(200);
       localStorage.removeItem('vibe_user');
     }
   },
 
   hotels: {
-    /**
-     * Search logic - currently runs the local algorithm.
-     * In production: Call an Edge Function or SQL query.
-     */
     search: async (interest: string, city: string): Promise<ScoredHotel[]> => {
-      await delay(600); // Simulate API crunching numbers
+      // Keep using local algorithm for now (Phase 1)
+      await delay(600);
       return getHotelsByActivity(interest, city);
     },
 
-    /**
-     * Get users specific to a hotel and interest (The "Tribe")
-     */
     getGuests: async (hotelId: string, interest: string): Promise<User[]> => {
+      // Keep using mock bookings for now (Phase 1)
       await delay(300);
-      
-      // Dynamic hotels don't have hardcoded bookings in our mock DB
       if (hotelId.startsWith('dyn_')) return [];
 
       const bookings = MOCK_BOOKINGS.filter(
         b => b.hotelId === hotelId && b.primaryInterest === interest
       );
-      
+
       const relevantUsers = bookings
         .map(b => USERS.find(u => u.id === b.userId))
         .filter((u): u is User => !!u);
-        
-      // Deduplicate by ID
+
       return Array.from(new Set(relevantUsers.map(u => u.id)))
         .map(id => relevantUsers.find(u => u.id === id)!);
     }
   },
 
   chat: {
-    /**
-     * Fetch history for a lobby
-     */
     getHistory: async (hotelId: string): Promise<ChatMessage[]> => {
-       await delay(100);
-       return DB.messages[hotelId] || [];
-    },
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('hotel_id', hotelId)
+        .eq('is_private', false)
+        .order('created_at', { ascending: true });
 
-    /**
-     * Send a message to the lobby or private chat
-     * In production: supabase.from('messages').insert(...)
-     */
-    sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string): Promise<ChatMessage> => {
-      await delay(200);
-      
-      const newMessage: ChatMessage = {
-        id: Date.now().toString() + Math.random().toString().slice(2, 5),
-        userId: user.id,
-        userName: user.name,
-        userAvatar: user.avatar,
-        text,
-        image,
-        timestamp: Date.now()
-      };
-
-      // Persist in mock DB only if it's a public lobby message
-      if (!isPrivate) {
-        if (!DB.messages[hotelId]) {
-          DB.messages[hotelId] = [];
-        }
-        DB.messages[hotelId].push(newMessage);
+      if (error) {
+        console.error("Error fetching chat:", error);
+        return [];
       }
 
-      return newMessage;
+      return data.map((m: any) => ({
+        id: m.id,
+        userId: m.user_id,
+        userName: m.user_name,
+        userAvatar: m.user_avatar,
+        text: m.text,
+        image: m.image,
+        timestamp: new Date(m.created_at).getTime(),
+        isAi: false
+      }));
+    },
+
+    sendMessage: async (hotelId: string, text: string, user: User, isPrivate = false, image?: string): Promise<ChatMessage> => {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          hotel_id: hotelId,
+          user_id: user.id,
+          user_name: user.name,
+          user_avatar: user.avatar,
+          text: text,
+          image: image || null,
+          is_private: isPrivate,
+          recipient_id: isPrivate ? 'todo_fix_recipient' : null // Ideally pass recipientId
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error sending message:", error);
+        throw error;
+      }
+
+      return {
+        id: data.id,
+        userId: data.user_id,
+        userName: data.user_name,
+        userAvatar: data.user_avatar,
+        text: data.text,
+        image: data.image,
+        timestamp: new Date(data.created_at).getTime(),
+        isAi: false
+      };
+    },
+
+    subscribeToLobby: (hotelId: string, onMessage: (msg: ChatMessage) => void) => {
+      return supabase
+        .channel(`lobby:${hotelId}`)
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotelId}` },
+          (payload) => {
+            const m = payload.new;
+            // Only notify for public messages (private ones need separate sub or filter)
+            if (!m.is_private) {
+              onMessage({
+                id: m.id,
+                userId: m.user_id,
+                userName: m.user_name,
+                userAvatar: m.user_avatar,
+                text: m.text,
+                image: m.image,
+                timestamp: new Date(m.created_at).getTime(),
+                isAi: false
+              });
+            }
+          }
+        )
+        .subscribe();
     }
   },
 
   nudge: {
-    /**
-     * Send a "Nudge" (Invitation to chat)
-     */
     sendNudge: async (fromUserId: string, toUserId: string): Promise<Nudge> => {
-      await delay(300);
-      
-      // Check for existing
-      const existing = DB.nudges.find(n => 
-        (n.fromUserId === fromUserId && n.toUserId === toUserId) ||
-        (n.fromUserId === toUserId && n.toUserId === fromUserId)
-      );
+      // Check existing
+      const { data: existing } = await supabase
+        .from('nudges')
+        .select('*')
+        .or(`and(from_user_id.eq.${fromUserId},to_user_id.eq.${toUserId}),and(from_user_id.eq.${toUserId},to_user_id.eq.${fromUserId})`)
+        .single();
 
-      if (existing) return existing;
+      if (existing) {
+        return {
+          id: existing.id,
+          fromUserId: existing.from_user_id,
+          toUserId: existing.to_user_id,
+          status: existing.status,
+          timestamp: new Date(existing.created_at).getTime()
+        };
+      }
 
-      const newNudge: Nudge = {
-        id: `nudge_${Date.now()}`,
-        fromUserId,
-        toUserId,
-        status: 'pending',
-        timestamp: Date.now()
+      const { data, error } = await supabase
+        .from('nudges')
+        .insert({
+          from_user_id: fromUserId,
+          to_user_id: toUserId,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        fromUserId: data.from_user_id,
+        toUserId: data.to_user_id,
+        status: data.status,
+        timestamp: new Date(data.created_at).getTime()
       };
-      
-      DB.nudges.push(newNudge);
-
-      // --- SIMULATION: AUTO-ACCEPT ---
-      // If the recipient is a "bot" (from MOCK_DATA), they accept after 3 seconds.
-      // This allows the user to test the feature without a real second user.
-      const isBot = toUserId.startsWith('u'); // MOCK_DATA users have IDs like 'u1', 'u2'
-      if (isBot) {
-        setTimeout(() => {
-          const nudgeToUpdate = DB.nudges.find(n => n.id === newNudge.id);
-          if (nudgeToUpdate) {
-            nudgeToUpdate.status = 'accepted';
-          }
-        }, 4000);
-      }
-
-      return newNudge;
     },
 
-    /**
-     * Get all nudges involving a specific user
-     */
     getNudges: async (userId: string): Promise<Nudge[]> => {
-      await delay(200);
-      return DB.nudges.filter(n => n.fromUserId === userId || n.toUserId === userId);
+      const { data, error } = await supabase
+        .from('nudges')
+        .select('*')
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`);
+
+      if (error) {
+        console.error("Error fetching nudges:", error);
+        return [];
+      }
+
+      return data.map((n: any) => ({
+        id: n.id,
+        fromUserId: n.from_user_id,
+        toUserId: n.to_user_id,
+        status: n.status,
+        timestamp: new Date(n.created_at).getTime()
+      }));
     },
 
-    /**
-     * Accept or Reject a nudge
-     */
     respondToNudge: async (nudgeId: string, status: 'accepted' | 'rejected'): Promise<Nudge | null> => {
-      await delay(300);
-      const nudge = DB.nudges.find(n => n.id === nudgeId);
-      if (nudge) {
-        nudge.status = status;
-        return nudge;
-      }
-      return null;
+      const { data, error } = await supabase
+        .from('nudges')
+        .update({ status })
+        .eq('id', nudgeId)
+        .select()
+        .single();
+
+      if (error) return null;
+
+      return {
+        id: data.id,
+        fromUserId: data.from_user_id,
+        toUserId: data.to_user_id,
+        status: data.status,
+        timestamp: new Date(data.created_at).getTime()
+      };
     }
   }
 };

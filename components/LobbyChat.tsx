@@ -76,6 +76,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
   // 1. INITIAL LOAD
+  // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
   useEffect(() => {
     // Load history
     api.chat.getHistory(hotel.id).then(msgs => {
@@ -94,6 +95,15 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       }
     });
 
+    // Subscribe to Real-time Updates
+    const subscription = api.chat.subscribeToLobby(hotel.id, (newMsg) => {
+      setLobbyMessages(prev => {
+        // Avoid duplicates
+        if (prev.find(m => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+    });
+
     // Load Nudges
     const loadNudges = async () => {
       const myNudges = await api.nudge.getNudges(currentUser.id);
@@ -104,6 +114,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     if ('Notification' in window && Notification.permission !== 'granted') {
       Notification.requestPermission();
     }
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [hotel.id, interest, hotel.name, currentUser.id]);
 
   // 2. POLLING FOR NUDGES (Simple simulation for real-time vibe updates)
@@ -668,10 +682,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             )}
 
             <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm relative ${msg.userId === currentUser.id
-                ? 'bg-brand-500 text-white rounded-br-none'
-                : msg.isAi
-                  ? 'bg-purple-100 text-purple-900 border border-purple-200 w-full text-center italic text-sm my-2'
-                  : 'bg-white text-gray-800 rounded-bl-none'
+              ? 'bg-brand-500 text-white rounded-br-none'
+              : msg.isAi
+                ? 'bg-purple-100 text-purple-900 border border-purple-200 w-full text-center italic text-sm my-2'
+                : 'bg-white text-gray-800 rounded-bl-none'
               }`}>
               {msg.isAi && <Sparkles size={12} className="inline mr-1 text-purple-500" />}
 
