@@ -16,13 +16,13 @@ type BookingStep = 'search' | 'selection' | 'details' | 'payment' | 'confirmed';
 const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, onConfirm }) => {
   const { grantDigitalKey } = useAuth();
   const [step, setStep] = useState<BookingStep>('search');
-  
+
   // Data State
   const [offers, setOffers] = useState<RoomOffer[]>([]);
   const [selectedOffer, setSelectedOffer] = useState<RoomOffer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  
+
   // Form State
   const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '' });
   const [bookingRef, setBookingRef] = useState('');
@@ -49,7 +49,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
         setIsLoading(false);
       }
     };
-    
+
     fetchOffers();
   }, [hotel]);
 
@@ -57,8 +57,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   useEffect(() => {
     if (step === 'payment' && duffelContainerRef.current) {
       // NOTE: In production, use your actual Duffel Public Key
-      const DUFFEL_PUBLIC_KEY = 'test_123_placeholder_key'; 
-      
+      const DUFFEL_PUBLIC_KEY = import.meta.env.VITE_DUFFEL_PUBLIC_KEY || 'test_123_placeholder_key';
+
       try {
         if (window.DuffelComponents) {
           const duffel = window.DuffelComponents.createCardComponent({
@@ -91,8 +91,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
           setDuffelInstance(duffel);
 
           return () => {
-             // Cleanup if user navigates back
-             if (duffel) duffel.unmount();
+            // Cleanup if user navigates back
+            if (duffel) duffel.unmount();
           };
         } else {
           setErrorMsg("Payment system failed to load. Please check your connection.");
@@ -124,12 +124,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
     if (!selectedOffer) return;
     setIsLoading(true);
     setErrorMsg(null);
-    
+
     // Mock Dates
     const checkIn = new Date();
     const checkOut = new Date();
     checkOut.setDate(checkOut.getDate() + 3);
-    
+
     try {
       let paymentToken = "tok_visa_simulation";
 
@@ -142,18 +142,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
           }
           paymentToken = result.token;
         } catch (e: any) {
-           // Fallback for demo purposes if the API key is invalid/placeholder
-           // In production, you would throw here: throw e;
-           console.warn("Duffel Tokenization failed (expected without valid key). Using mock token.");
-           paymentToken = "tok_mock_fallback";
+          // Fallback for demo purposes if the API key is invalid/placeholder
+          // In production, you would throw here: throw e;
+          console.warn("Duffel Tokenization failed (expected without valid key). Using mock token.");
+          paymentToken = "tok_mock_fallback";
         }
       }
 
       // 2. Call our Backend Integration Service
       const result = await duffelService.bookHotelAndUnlockLobby(
         hotel,
-        selectedOffer.id, 
-        guestDetails, 
+        selectedOffer.id,
+        guestDetails,
         paymentToken,
         checkIn,
         checkOut
@@ -161,7 +161,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
 
       if (result.success) {
         setBookingRef(result.data.booking_reference);
-        
+
         // 3. Trigger the "Unlock Logic" in AuthContext
         grantDigitalKey(result);
 
@@ -205,11 +205,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative flex flex-col max-h-[90vh]">
-        
+
         {renderHeader()}
 
         <div className="flex-1 overflow-y-auto p-6">
-          
+
           {/* STEP 1: SEARCHING (Loading) */}
           {step === 'search' && (
             <div className="flex flex-col items-center justify-center h-64 space-y-4">
@@ -222,18 +222,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
           {step === 'selection' && (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 flex gap-4">
-                 <img src={hotel.images[0]} className="w-16 h-16 rounded-lg object-cover" alt="" />
-                 <div>
-                   <h3 className="font-bold text-gray-900">{hotel.name}</h3>
-                   <div className="flex items-center text-xs text-gray-500 mt-1">
-                      <Calendar size={12} className="mr-1" /> Oct 14 - Oct 17 (3 Nights)
-                   </div>
-                 </div>
+                <img src={hotel.images[0]} className="w-16 h-16 rounded-lg object-cover" alt="" />
+                <div>
+                  <h3 className="font-bold text-gray-900">{hotel.name}</h3>
+                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                    <Calendar size={12} className="mr-1" /> Oct 14 - Oct 17 (3 Nights)
+                  </div>
+                </div>
               </div>
 
               <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide mb-2">Select a Room</h3>
               {offers.map(offer => (
-                <div 
+                <div
                   key={offer.id}
                   onClick={() => handleSelectOffer(offer)}
                   className="border border-gray-200 rounded-xl p-4 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group"
@@ -244,8 +244,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                   </div>
                   <p className="text-xs text-gray-500 mb-3 leading-relaxed">{offer.description}</p>
                   <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Bed size={14}/> {offer.bedType}</span>
-                    <span className="flex items-center gap-1"><Users size={14}/> Max {offer.capacity}</span>
+                    <span className="flex items-center gap-1"><Bed size={14} /> {offer.bedType}</span>
+                    <span className="flex items-center gap-1"><Users size={14} /> Max {offer.capacity}</span>
                   </div>
                 </div>
               ))}
@@ -267,22 +267,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">First Name</label>
-                    <input 
+                    <input
                       required
-                      type="text" 
+                      type="text"
                       value={guestDetails.firstName}
-                      onChange={e => setGuestDetails({...guestDetails, firstName: e.target.value})}
+                      onChange={e => setGuestDetails({ ...guestDetails, firstName: e.target.value })}
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                       placeholder="e.g. Alice"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">Last Name</label>
-                    <input 
+                    <input
                       required
-                      type="text" 
+                      type="text"
                       value={guestDetails.lastName}
-                      onChange={e => setGuestDetails({...guestDetails, lastName: e.target.value})}
+                      onChange={e => setGuestDetails({ ...guestDetails, lastName: e.target.value })}
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                       placeholder="e.g. Wonderland"
                     />
@@ -290,11 +290,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
-                  <input 
+                  <input
                     required
-                    type="email" 
+                    type="email"
                     value={guestDetails.email}
-                    onChange={e => setGuestDetails({...guestDetails, email: e.target.value})}
+                    onChange={e => setGuestDetails({ ...guestDetails, email: e.target.value })}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                     placeholder="alice@example.com"
                   />
@@ -310,34 +310,34 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
           {/* STEP 4: PAYMENT (Duffel Components) */}
           {step === 'payment' && selectedOffer && (
             <div className="space-y-6">
-               <div className="text-center mb-6">
-                 <div className="text-3xl font-bold text-gray-900">${selectedOffer.price}</div>
-                 <div className="text-sm text-gray-500">Total due now (Merchant: {hotel.name})</div>
-               </div>
+              <div className="text-center mb-6">
+                <div className="text-3xl font-bold text-gray-900">${selectedOffer.price}</div>
+                <div className="text-sm text-gray-500">Total due now (Merchant: {hotel.name})</div>
+              </div>
 
-               {/* Container for Duffel Components Iframe */}
-               <div className="bg-white p-1">
-                 <div ref={duffelContainerRef} id="duffel-payment-container" className="min-h-[200px]"></div>
-               </div>
-               
-               {errorMsg && (
-                 <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 animate-in fade-in">
-                   <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                   {errorMsg}
-                 </div>
-               )}
+              {/* Container for Duffel Components Iframe */}
+              <div className="bg-white p-1">
+                <div ref={duffelContainerRef} id="duffel-payment-container" className="min-h-[200px]"></div>
+              </div>
 
-               <button 
-                  onClick={handlePay}
-                  disabled={isLoading}
-                  className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all disabled:opacity-50"
-               >
-                 {isLoading ? <Loader2 className="animate-spin" /> : `Pay $${selectedOffer.price} & Book`}
-               </button>
-               
-               <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
-                 <Lock size={10} /> Payments processed securely via Duffel
-               </div>
+              {errorMsg && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  {errorMsg}
+                </div>
+              )}
+
+              <button
+                onClick={handlePay}
+                disabled={isLoading}
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all disabled:opacity-50"
+              >
+                {isLoading ? <Loader2 className="animate-spin" /> : `Pay $${selectedOffer.price} & Book`}
+              </button>
+
+              <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400">
+                <Lock size={10} /> Payments processed securely via Duffel
+              </div>
             </div>
           )}
 
@@ -349,7 +349,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
               </div>
               <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Booking Confirmed!</h3>
               <p className="text-gray-500 mb-2">You're going to {hotel.city}!</p>
-              
+
               <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 mb-8 font-mono text-sm text-gray-600">
                 Ref: <span className="font-bold text-gray-900">{bookingRef}</span>
               </div>
@@ -363,7 +363,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                 </p>
               </div>
 
-              <button 
+              <button
                 onClick={handleFinish}
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center"
               >
