@@ -5,7 +5,7 @@ import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 // NOTE: In production, this Client ID should be in an environment variable.
 // This is a public demo ID provided by Web3Auth for testing.
 // You must register your app at https://dashboard.web3auth.io to get your own ID.
-const CLIENT_ID = import.meta.env.VITE_WEB3AUTH_CLIENT_ID || "BFqTPKi0dxXvTnq32q42HWYrGUwOSaiFaiNz1ELOT1lqOLoHiwd6yCZ5wm8F_P_4aq7EKQgDhanfttNw5n14y1M"; // Fallback to hardcoded for dev if env missing
+const CLIENT_ID = (window as any).__ENV__?.VITE_WEB3AUTH_CLIENT_ID || import.meta.env.VITE_WEB3AUTH_CLIENT_ID || "BFqTPKi0dxXvTnq32q42HWYrGUwOSaiFaiNz1ELOT1lqOLoHiwd6yCZ5wm8F_P_4aq7EKQgDhanfttNw5n14y1M"; // Fallback to hardcoded for dev if env missing
 
 
 const chainConfig = {
@@ -51,7 +51,7 @@ const openloginAdapter = new OpenloginAdapter({
   privateKeyProvider
 });
 
-web3auth.configureAdapter(openloginAdapter);
+web3auth.configureAdapter(openloginAdapter as any);
 
 export const initWeb3Auth = async () => {
   try {
