@@ -88,13 +88,13 @@ export const duffelService = {
   /**
    * 2. Create Booking
    */
-  bookHotelAndUnlockLobby: async (
+  bookHotel: async (
     hotel: ScoredHotel,
     offerId: string,
     guest: GuestDetails,
-    paymentToken: string,
-    checkInDate: Date,
-    checkOutDate: Date
+    paymentToken?: string,
+    checkInDate?: Date,
+    checkOutDate?: Date
   ): Promise<BookingConfirmationResponse> => {
 
     // 1. Create Quote (Lock Price)
@@ -118,7 +118,8 @@ export const duffelService = {
           email: guest.email
         }],
         email: guest.email,
-        phoneNumber: '+15555555555' // Placeholder
+        phoneNumber: '+15555555555', // Placeholder
+        paymentToken: paymentToken
       })
     });
 

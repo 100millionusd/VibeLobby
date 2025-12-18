@@ -150,7 +150,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
       }
 
       // 2. Call our Backend Integration Service
-      const result = await duffelService.bookHotelAndUnlockLobby(
+      const confirmation = await duffelService.bookHotel(
         hotel,
         selectedOffer.id,
         guestDetails,
@@ -159,11 +159,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
         checkOut
       );
 
-      if (result.success) {
-        setBookingRef(result.data.booking_reference);
+      if (confirmation.success) {
+        setBookingRef(confirmation.data.booking_reference);
 
         // 3. Trigger the "Unlock Logic" in AuthContext
-        grantDigitalKey(result);
+        grantDigitalKey(confirmation);
 
         setStep('confirmed');
       }

@@ -72,7 +72,7 @@ router.post('/quote', async (req, res) => {
 // 4. Create a Booking
 router.post('/book', async (req, res) => {
     try {
-        const { quoteId, guests, email, phoneNumber } = req.body;
+        const { quoteId, guests, email, phoneNumber, paymentToken } = req.body;
 
         // Mock Fallback
         if (quoteId && quoteId.startsWith('quote_mock_')) {
@@ -86,12 +86,21 @@ router.post('/book', async (req, res) => {
             });
         }
 
-        const booking = await duffel.stays.bookings.create({
+        const bookingPayload = {
             quote_id: quoteId,
             guests: guests, // [{ given_name, family_name, born_on, ... }]
             email: email,
             phone_number: phoneNumber
-        });
+        };
+
+        if (paymentToken) {
+            bookingPayload.payment = {
+                type: "card",
+                token: paymentToken
+            };
+        }
+
+        const booking = await duffel.stays.bookings.create(bookingPayload);
 
         res.json(booking.data);
     } catch (error) {
