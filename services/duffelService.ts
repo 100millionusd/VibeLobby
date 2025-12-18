@@ -43,7 +43,7 @@ export const duffelService = {
       const searchData = await searchRes.json();
       if (!searchData.results || searchData.results.length === 0) {
         console.warn("Duffel API returned no results. Using mock data.");
-        return this.getMockOffers(hotel);
+        return duffelService.getMockOffers(hotel);
       }
 
       // 2. Get rates for the first result (Best Match)
@@ -68,7 +68,7 @@ export const duffelService = {
 
     } catch (error) {
       console.error("Duffel API Error:", error);
-      return this.getMockOffers(hotel);
+      return duffelService.getMockOffers(hotel);
     }
   },
 
