@@ -43,6 +43,7 @@ export const web3auth = new Web3Auth({
 const authAdapter = new AuthAdapter({
   adapterSettings: {
     uxMode: "redirect", // Critical for mobile support
+    redirectUrl: window.location.origin, // Explicitly set redirect URL
     whiteLabel: {
       appName: "VibeLobby",
       theme: { primary: "#e11d48" }
