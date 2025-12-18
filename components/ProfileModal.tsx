@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileModalProps {
@@ -12,6 +12,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
     const [name, setName] = useState(user?.name || '');
     const [bio, setBio] = useState(user?.bio || '');
     const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSave = async () => {
         if (!name.trim()) return;
@@ -32,10 +33,60 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
         onClose();
     };
 
-    const handleShuffleAvatar = () => {
+    const handleShuffleAvatar = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent triggering file upload
         const newSeed = Math.random().toString(36).substring(7);
         const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${newSeed}`;
         updateUser({ avatar: newAvatar });
+    };
+
+    const compressAvatar = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 200; // Avatars don't need to be huge
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = (err) => reject(err);
+            };
+            reader.onerror = (err) => reject(err);
+        });
+    };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                const compressed = await compressAvatar(file);
+                updateUser({ avatar: compressed });
+            } catch (err) {
+                console.error("Failed to process avatar", err);
+            }
+        }
     };
 
     if (!user) return null;
@@ -57,20 +108,42 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                 {/* Body */}
                 <div className="p-6">
                     <div className="flex flex-col items-center mb-6">
-                        <div className="relative group cursor-pointer" onClick={handleShuffleAvatar}>
+
+                        {/* Avatar Container */}
+                        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <img
                                 src={user.avatar}
                                 alt={user.name}
                                 className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
                             />
+
+                            {/* Overlay: Upload (Default Hover) */}
                             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <RefreshCw className="text-white" size={24} />
+                                <Camera className="text-white" size={24} />
                             </div>
+
+                            {/* Shuffle Button (Floating) */}
+                            <button
+                                onClick={handleShuffleAvatar}
+                                className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-brand-50 hover:text-brand-600 transition-colors border border-gray-200"
+                                title="Shuffle Random Avatar"
+                            >
+                                <RefreshCw size={14} />
+                            </button>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 font-mono flex items-center gap-1">
+
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                        />
+
+                        <p className="text-xs text-gray-400 mt-3 font-mono flex items-center gap-1">
                             {user.walletAddress ? 'Wallet Connected' : 'Social Login'}
                             <span className="text-gray-300">•</span>
-                            <button onClick={handleShuffleAvatar} className="hover:text-brand-600 underline">Shuffle Avatar</button>
+                            <span className="text-gray-500">Click image to upload</span>
                         </p>
                     </div>
 
