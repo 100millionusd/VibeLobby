@@ -158,7 +158,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active'
     };
 
-    const updatedUser = { ...user, digitalKeys: [...user.digitalKeys, newKey] };
+    // Promote guest to verified user so session persists
+    const updatedUser = {
+      ...user,
+      isGuest: false,
+      digitalKeys: [...user.digitalKeys, newKey]
+    };
     setUser(updatedUser);
     localStorage.setItem('vibe_user', JSON.stringify(updatedUser));
   };
