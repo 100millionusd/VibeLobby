@@ -247,36 +247,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     }
   }, [lobbyMessages, activeView, privateMessages, isAccessGranted, pendingImage]);
 
-  // 5. SIMULATE JOIN
-  useEffect(() => {
-    if (!isAccessGranted || initialMembers.length === 0) return;
-    const randomTime = Math.random() * 20000 + 10000;
-    const timer = setTimeout(() => {
-      const availableMembers = initialMembers.filter(m => m.id !== currentUser.id);
-      if (availableMembers.length === 0) return;
-      const newUser = availableMembers[Math.floor(Math.random() * availableMembers.length)];
 
-      onNotify({
-        id: Date.now().toString(),
-        type: 'join',
-        title: 'New Vibe Detected!',
-        text: `${newUser.name} just joined the ${interest} Lobby.`
-      });
-
-      const sysMsg: ChatMessage = {
-        id: 'sys-' + Date.now(),
-        userId: 'system',
-        userName: 'System',
-        userAvatar: '',
-        text: `${newUser.name} joined the lobby. Say hi! 👋`,
-        timestamp: Date.now(),
-        isAi: true
-      };
-      setLobbyMessages(prev => [...prev, sysMsg]);
-
-    }, randomTime);
-    return () => clearTimeout(timer);
-  }, [onNotify, interest, hotel.name, initialMembers, currentUser.id, isAccessGranted]);
 
   // --- LOCATION VERIFICATION ---
   const handleVerifyLocation = () => {
@@ -419,33 +390,9 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         if (prev.find(m => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
-      if (initialMembers.length > 0 && Math.random() > 0.7) {
-        setTimeout(async () => {
-          const randomUser = initialMembers[0];
-          const replyText = msgImage ? "Nice pic!" : "Love that energy!";
-          const reply = await api.chat.sendMessage(hotel.id, replyText, randomUser, false);
-          setLobbyMessages(prev => {
-            if (prev.find(m => m.id === reply.id)) return prev;
-            return [...prev, reply];
-          });
-        }, 2000);
-      }
     } else if (activeView === 'private' && selectedPrivateUser) {
       const otherUserId = selectedPrivateUser.id;
-      const recipientUser = selectedPrivateUser;
-
       setPrivateMessages(prev => ({ ...prev, [otherUserId]: [...(prev[otherUserId] || []), newMsg] }));
-
-      setTimeout(async () => {
-        const replies = ["Hey! Totally agree.", "That sounds super cool.", "I'm at the bar if you want to join!", "Haha exactly."];
-        const randomReply = msgImage ? "Whoa cool photo! Where is that?" : replies[Math.floor(Math.random() * replies.length)];
-        const replyMsg = await api.chat.sendMessage(hotel.id, randomReply, recipientUser, true);
-
-        setPrivateMessages(prev => ({
-          ...prev,
-          [otherUserId]: [...(prev[otherUserId] || []), replyMsg]
-        }));
-      }, 2000 + Math.random() * 2000);
     }
   };
 
