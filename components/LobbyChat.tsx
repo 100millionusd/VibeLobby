@@ -148,7 +148,12 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
               // Optional: Notify if not currently viewing this chat
               if (activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
-                // We could trigger a toast here, but let's rely on the Nudge/Notification system or just the red dot
+                onNotify({
+                  id: Date.now().toString(),
+                  type: 'message',
+                  title: `New Message from ${m.user_name}`,
+                  text: m.text || 'Sent an image'
+                });
               }
             }
           }
@@ -409,15 +414,23 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     setInput('');
     setPendingImage(null);
 
-    const recipientId = isPrivate && selectedPrivateUser ? selectedPrivateUser.id : undefined;
-    const newMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
-
-    // Optimistic update is handled by the subscription now, but we can keep it for instant feedback
-    // actually, let's rely on subscription to avoid duplicates or use a check
-    // For now, let's NOT manually update state here, and let the subscription handle it.
-    // This ensures we only show messages that actually made it to the server.
-    // BUT, for better UX, we might want optimistic updates. 
-    // Let's stick to subscription-driven for consistency first.
+    try {
+      const recipientId = isPrivate && selectedPrivateUser ? selectedPrivateUser.id : undefined;
+      await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      onNotify({
+        id: Date.now().toString(),
+        type: 'message',
+        title: 'Message Failed',
+        text: 'Could not send message. Please try again.'
+      });
+      // Restore input if needed, or just let user re-type. 
+      // For now, we cleared it, which is annoying. 
+      // Ideally we'd restore it, but let's at least notify.
+      setInput(msgText); // Restore text
+      if (msgImage) setPendingImage(msgImage); // Restore image
+    }
   };
 
   const currentMessages = activeView === 'lobby'
