@@ -67,6 +67,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   // PRESENCE STATE
   const [onlineMembers, setOnlineMembers] = useState<User[]>(initialMembers);
+  const [connectionStatus, setConnectionStatus] = useState<string>('CONNECTING');
 
   // CHAT STATE
   const [lobbyMessages, setLobbyMessages] = useState<ChatMessage[]>([]);
@@ -150,6 +151,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         setOnlineMembers([...onlineUsers, ...filteredMocks]);
       })
       .subscribe(async (status) => {
+        setConnectionStatus(status);
         if (status === 'SUBSCRIBED') {
           await channel.track({
             user_id: currentUser.id,
@@ -678,6 +680,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                   <>
                     <span className={`w-2 h-2 rounded-full ${hasDigitalKey ? 'bg-blue-300' : 'bg-green-400'} animate-pulse`} />
                     {hasDigitalKey ? 'Verified Guest Access' : 'Live at Hotel'} • {onlineMembers.length} Online
+                    <span className="ml-2 text-[8px] opacity-50">({connectionStatus})</span>
                   </>
                 ) : (
                   'Private Conversation'
