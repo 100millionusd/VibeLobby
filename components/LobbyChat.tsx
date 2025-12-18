@@ -207,6 +207,30 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       Notification.requestPermission();
     }
 
+    // PUSH NOTIFICATIONS SETUP
+    const setupPush = async () => {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          console.log('SW Registered');
+
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: (window as any).__ENV__.VITE_VAPID_PUBLIC_KEY
+            });
+
+            await api.chat.subscribeToPush(subscription, currentUser.id);
+            console.log('Push Subscribed');
+          }
+        } catch (err) {
+          console.error('Push Setup Failed:', err);
+        }
+      }
+    };
+    setupPush();
+
     return () => {
       channel.unsubscribe();
     };

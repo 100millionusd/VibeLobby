@@ -54,11 +54,78 @@ router.post('/send', async (req, res) => {
             throw error;
         }
 
+        // 3. Send Push Notification (Fire and Forget)
+        if (isPrivate && recipientId) {
+            (async () => {
+                try {
+                    // Get recipient's subscriptions
+                    const { data: subs } = await supabaseAdmin
+                        .from('push_subscriptions')
+                        .select('*')
+                        .eq('user_id', recipientId);
+
+                    if (subs && subs.length > 0) {
+                        const payload = JSON.stringify({
+                            title: `New Message from ${user.name}`,
+                            body: text || 'Sent an image',
+                            url: `/?chat=${user.id}` // Deep link logic (simplified)
+                        });
+
+                        // Send to all user's devices
+                        const importWebPush = await import('web-push'); // Dynamic import to avoid top-level issues if not init
+                        const webpush = importWebPush.default;
+
+                        subs.forEach(sub => {
+                            const pushConfig = {
+                                endpoint: sub.endpoint,
+                                keys: {
+                                    p256dh: sub.p256dh,
+                                    auth: sub.auth
+                                }
+                            };
+                            webpush.sendNotification(pushConfig, payload).catch(err => {
+                                console.error("Push Failed", err);
+                                if (err.statusCode === 410) {
+                                    // Subscription expired, delete it
+                                    supabaseAdmin.from('push_subscriptions').delete().eq('id', sub.id);
+                                }
+                            });
+                        });
+                    }
+                } catch (pushErr) {
+                    console.error("Push Notification Error:", pushErr);
+                }
+            })();
+        }
+
         res.json(data);
 
     } catch (error) {
         console.error("Backend Chat Error:", error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/chat/subscribe
+router.post('/subscribe', async (req, res) => {
+    try {
+        const { subscription, userId } = req.body;
+        if (!subscription || !userId) return res.status(400).json({ error: "Missing data" });
+
+        const { error } = await supabaseAdmin
+            .from('push_subscriptions')
+            .upsert({
+                user_id: userId,
+                endpoint: subscription.endpoint,
+                p256dh: subscription.keys.p256dh,
+                auth: subscription.keys.auth
+            }, { onConflict: 'user_id, endpoint' });
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Subscription Error:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 

@@ -37,6 +37,22 @@ if (duffelToken) {
     console.warn("WARNING: DUFFEL_ACCESS_TOKEN is missing. Hotel API will fail.");
 }
 
+// Initialize Web Push
+import webpush from 'web-push';
+const publicVapidKey = process.env.VITE_VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+
+if (publicVapidKey && privateVapidKey) {
+    webpush.setVapidDetails(
+        'mailto:info@vibelobby.com',
+        publicVapidKey,
+        privateVapidKey
+    );
+    console.log("Web Push Initialized");
+} else {
+    console.warn("WARNING: VAPID Keys missing. Push notifications will not work.");
+}
+
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
@@ -64,7 +80,8 @@ const serveIndex = (req, res) => {
               VITE_SUPABASE_ANON_KEY: "${process.env.VITE_SUPABASE_ANON_KEY || ''}",
               VITE_DUFFEL_PUBLIC_KEY: "${process.env.VITE_DUFFEL_PUBLIC_KEY || ''}",
               VITE_WEB3AUTH_CLIENT_ID: "${process.env.VITE_WEB3AUTH_CLIENT_ID || ''}",
-              VITE_DUFFEL_CHECKOUT_URL: "${process.env.VITE_DUFFEL_CHECKOUT_URL || ''}"
+              VITE_DUFFEL_CHECKOUT_URL: "${process.env.VITE_DUFFEL_CHECKOUT_URL || ''}",
+              VITE_VAPID_PUBLIC_KEY: "${process.env.VITE_VAPID_PUBLIC_KEY || ''}"
             };
             console.log("Runtime Env Injected");
           </script>

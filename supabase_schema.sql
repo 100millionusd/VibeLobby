@@ -50,3 +50,19 @@ alter table public.nudges enable row level security;
 create policy "Nudges are viewable by everyone" on public.nudges for select using (true);
 create policy "Anyone can insert nudges" on public.nudges for insert with check (true);
 create policy "Anyone can update nudges" on public.nudges for update using (true);
+
+-- 6. PUSH SUBSCRIPTIONS
+create table public.push_subscriptions (
+  id uuid default gen_random_uuid() primary key,
+  user_id text not null references public.users(id),
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, endpoint)
+);
+
+alter table public.push_subscriptions enable row level security;
+create policy "Users can insert their own subscription" on public.push_subscriptions for insert with check (true);
+create policy "Users can delete their own subscription" on public.push_subscriptions for delete using (true);
+create policy "Public subscriptions are viewable by everyone" on public.push_subscriptions for select using (true);
