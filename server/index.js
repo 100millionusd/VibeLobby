@@ -7,7 +7,7 @@ import { Duffel } from '@duffel/api';
 import hotelRoutes from './routes/hotels.js';
 import chatRoutes from './routes/chat.js';
 
-dotenv.config();
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '../.env') });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +73,12 @@ const serveIndex = (req, res) => {
         }
 
         // Inject Runtime Environment Variables
+        const vapidKey = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+
+        console.log("Injecting Runtime Env:");
+        console.log("  VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "Set" : "Missing");
+        console.log("  VITE_VAPID_PUBLIC_KEY:", vapidKey ? "Set" : "Missing");
+
         const envScript = `
           <script>
             window.__ENV__ = {
@@ -81,7 +87,7 @@ const serveIndex = (req, res) => {
               VITE_DUFFEL_PUBLIC_KEY: "${process.env.VITE_DUFFEL_PUBLIC_KEY || ''}",
               VITE_WEB3AUTH_CLIENT_ID: "${process.env.VITE_WEB3AUTH_CLIENT_ID || ''}",
               VITE_DUFFEL_CHECKOUT_URL: "${process.env.VITE_DUFFEL_CHECKOUT_URL || ''}",
-              VITE_VAPID_PUBLIC_KEY: "${process.env.VITE_VAPID_PUBLIC_KEY || ''}"
+              VITE_VAPID_PUBLIC_KEY: "${vapidKey}"
             };
             console.log("Runtime Env Injected");
           </script>
