@@ -4,6 +4,7 @@ import { ChatMessage, ScoredHotel, User, Nudge } from '../types';
 import { generateLobbyIcebreaker, verifyBookingReceipt } from '../services/geminiService';
 import { NotificationItem } from './NotificationToast';
 import { api } from '../services/api';
+import { supabase } from '../services/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LobbyChatProps {
@@ -80,6 +81,13 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   // 1. INITIAL LOAD
   // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
+  import { supabase } from '../services/supabaseClient';
+
+  // ... (keep existing imports)
+
+  // ... (inside LobbyChat component)
+
+  // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
   useEffect(() => {
     // Load history
     api.chat.getHistory(hotel.id).then(msgs => {
@@ -98,54 +106,66 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       }
     });
 
-    // Subscribe to Real-time Updates & Presence
-    const channel = api.chat.subscribeToLobby(hotel.id, (newMsg) => {
-      setLobbyMessages(prev => {
-        if (prev.find(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
+    // UNIFIED CHANNEL LOGIC
+    const channel = supabase.channel(`lobby:${hotel.id}`);
+
+    channel
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
+        (payload) => {
+          const m = payload.new as any;
+          if (!m.is_private) {
+            const newMsg: ChatMessage = {
+              id: m.id,
+              userId: m.user_id,
+              userName: m.user_name,
+              userAvatar: m.user_avatar,
+              text: m.text,
+              image: m.image,
+              timestamp: new Date(m.created_at).getTime(),
+              isAi: false
+            };
+            setLobbyMessages(prev => {
+              if (prev.find(msg => msg.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
+        }
+      )
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const onlineUsers: User[] = [];
+
+        for (const id in state) {
+          const presence = state[id][0] as any;
+          onlineUsers.push({
+            id: presence.user_id,
+            name: presence.name,
+            avatar: presence.avatar,
+            bio: presence.bio,
+            digitalKeys: [],
+            isGuest: false
+          });
+        }
+
+        // Merge Real Users with Mock Users (deduplicated)
+        const realUserIds = new Set(onlineUsers.map(u => u.id));
+        const filteredMocks = initialMembers.filter(m => !realUserIds.has(m.id));
+
+        setOnlineMembers([...onlineUsers, ...filteredMocks]);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: currentUser.id,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+            bio: currentUser.bio,
+            online_at: new Date().toISOString()
+          });
+        }
       });
-    });
-
-    // Presence Logic
-    const presenceTrack = async () => {
-      await channel.track({
-        user_id: currentUser.id,
-        name: currentUser.name,
-        avatar: currentUser.avatar,
-        bio: currentUser.bio,
-        online_at: new Date().toISOString()
-      });
-    };
-
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      const onlineUsers: User[] = [];
-
-      for (const id in state) {
-        const presence = state[id][0] as any;
-        onlineUsers.push({
-          id: presence.user_id,
-          name: presence.name,
-          avatar: presence.avatar,
-          bio: presence.bio,
-          digitalKeys: [], // Placeholder
-          isGuest: false
-        });
-      }
-
-      // Merge Real Users with Mock Users (deduplicated)
-      // We prioritize Real Users
-      const realUserIds = new Set(onlineUsers.map(u => u.id));
-      const filteredMocks = initialMembers.filter(m => !realUserIds.has(m.id));
-
-      setOnlineMembers([...onlineUsers, ...filteredMocks]);
-    });
-
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await presenceTrack();
-      }
-    });
 
 
 

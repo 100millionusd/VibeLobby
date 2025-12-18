@@ -146,32 +146,7 @@ export const api = {
       };
     },
 
-    subscribeToLobby: (hotelId: string, onMessage: (msg: ChatMessage) => void) => {
-      const channel = supabase.channel(`lobby:${hotelId}`);
 
-      channel
-        .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotelId}` },
-          (payload) => {
-            const m = payload.new;
-            // Only notify for public messages (private ones need separate sub or filter)
-            if (!m.is_private) {
-              onMessage({
-                id: m.id,
-                userId: m.user_id,
-                userName: m.user_name,
-                userAvatar: m.user_avatar,
-                text: m.text,
-                image: m.image,
-                timestamp: new Date(m.created_at).getTime(),
-                isAi: false
-              });
-            }
-          }
-        );
-
-      return channel;
-    }
   },
 
   nudge: {
