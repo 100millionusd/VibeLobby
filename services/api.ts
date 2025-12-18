@@ -172,6 +172,50 @@ export const api = {
       };
     },
 
+    subscribeToPush: async (subscription: any, userId: string) => {
+      await fetch('/api/chat/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription, userId })
+      });
+    },
+
+    getRecentContacts: async (currentUserId: string): Promise<User[]> => {
+      // 1. Get all private messages involving me
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('user_id, recipient_id')
+        .eq('is_private', true)
+        .or(`user_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`);
+
+      if (error || !messages) return [];
+
+      // 2. Extract unique other user IDs
+      const contactIds = new Set<string>();
+      messages.forEach((m: any) => {
+        if (m.user_id !== currentUserId) contactIds.add(m.user_id);
+        if (m.recipient_id !== currentUserId) contactIds.add(m.recipient_id);
+      });
+
+      if (contactIds.size === 0) return [];
+
+      // 3. Fetch user details
+      const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', Array.from(contactIds));
+
+      if (userError || !users) return [];
+
+      return users.map((u: any) => ({
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar,
+        bio: u.bio,
+        digitalKeys: [],
+        isGuest: false
+      }));
+    }
 
   },
 
