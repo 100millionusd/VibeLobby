@@ -64,6 +64,9 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   const [nudges, setNudges] = useState<Nudge[]>([]);
   const [pendingNudgeUser, setPendingNudgeUser] = useState<User | null>(null); // User currently being "viewed" for nudge action
 
+  // PRESENCE STATE
+  const [onlineMembers, setOnlineMembers] = useState<User[]>(initialMembers);
+
   // CHAT STATE
   const [lobbyMessages, setLobbyMessages] = useState<ChatMessage[]>([]);
   const [privateMessages, setPrivateMessages] = useState<Record<string, ChatMessage[]>>({});
@@ -101,6 +104,47 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         if (prev.find(m => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
+    });
+
+    // Presence Logic
+    const presenceTrack = async () => {
+      await channel.track({
+        user_id: currentUser.id,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        bio: currentUser.bio,
+        online_at: new Date().toISOString()
+      });
+    };
+
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState();
+      const onlineUsers: User[] = [];
+
+      for (const id in state) {
+        const presence = state[id][0] as any;
+        onlineUsers.push({
+          id: presence.user_id,
+          name: presence.name,
+          avatar: presence.avatar,
+          bio: presence.bio,
+          digitalKeys: [], // Placeholder
+          isGuest: false
+        });
+      }
+
+      // Merge Real Users with Mock Users (deduplicated)
+      // We prioritize Real Users
+      const realUserIds = new Set(onlineUsers.map(u => u.id));
+      const filteredMocks = initialMembers.filter(m => !realUserIds.has(m.id));
+
+      setOnlineMembers([...onlineUsers, ...filteredMocks]);
+    });
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await presenceTrack();
+      }
     });
 
     // Presence Logic
@@ -435,9 +479,9 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     ? lobbyMessages
     : (selectedPrivateUser ? privateMessages[selectedPrivateUser.id] || [] : []);
 
-  const displayMembers = Array.from(new Set([...initialMembers, currentUser].map(u => u.id)))
-    .map(id => [...initialMembers, currentUser].find(u => u.id === id)!)
-    .slice(0, 6);
+
+
+  const displayMembers = onlineMembers.slice(0, 6);
 
   // --- RENDER: GEO-GATE ---
   if (!isAccessGranted) {
@@ -661,7 +705,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                 {activeView === 'lobby' ? (
                   <>
                     <span className={`w-2 h-2 rounded-full ${hasDigitalKey ? 'bg-blue-300' : 'bg-green-400'} animate-pulse`} />
-                    {hasDigitalKey ? 'Verified Guest Access' : 'Live at Hotel'} • {hotel.matchingGuestCount} Online
+                    {hasDigitalKey ? 'Verified Guest Access' : 'Live at Hotel'} • {onlineMembers.length} Online
                   </>
                 ) : (
                   'Private Conversation'
