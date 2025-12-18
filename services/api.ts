@@ -16,7 +16,23 @@ export const api = {
   auth: {
     getSession: async (): Promise<User | null> => {
       const stored = localStorage.getItem('vibe_user');
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        const user = JSON.parse(stored);
+        // Ensure user exists in Supabase (Sync legacy local users to DB)
+        const { error } = await supabase.from('users').upsert({
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar,
+          bio: user.bio
+        });
+
+        if (error) {
+          console.error("Failed to sync user to Supabase:", error);
+          // We don't block login, but chat might fail.
+        }
+        return user;
+      }
+      return null;
     },
 
     loginAsGuest: async (): Promise<User> => {
