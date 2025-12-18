@@ -168,8 +168,7 @@ export const api = {
               });
             }
           }
-        )
-        .subscribe();
+        );
 
       return channel;
     }
