@@ -354,13 +354,19 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     const newMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage);
 
     if (activeView === 'lobby') {
-      setLobbyMessages(prev => [...prev, newMsg]);
+      setLobbyMessages(prev => {
+        if (prev.find(m => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
       if (initialMembers.length > 0 && Math.random() > 0.7) {
         setTimeout(async () => {
           const randomUser = initialMembers[0];
           const replyText = msgImage ? "Nice pic!" : "Love that energy!";
           const reply = await api.chat.sendMessage(hotel.id, replyText, randomUser, false);
-          setLobbyMessages(prev => [...prev, reply]);
+          setLobbyMessages(prev => {
+            if (prev.find(m => m.id === reply.id)) return prev;
+            return [...prev, reply];
+          });
         }, 2000);
       }
     } else if (activeView === 'private' && selectedPrivateUser) {
