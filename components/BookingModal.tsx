@@ -53,11 +53,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
     fetchOffers();
   }, [hotel]);
 
+  import { getEnv } from '../utils/env';
+
+  // ... imports
+
   // 2. Initialize Duffel Components when reaching payment step
   useEffect(() => {
     if (step === 'payment' && duffelContainerRef.current) {
       // NOTE: In production, use your actual Duffel Public Key
-      const DUFFEL_PUBLIC_KEY = import.meta.env.VITE_DUFFEL_PUBLIC_KEY || 'test_123_placeholder_key';
+      const DUFFEL_PUBLIC_KEY = getEnv('VITE_DUFFEL_PUBLIC_KEY') || 'test_123_placeholder_key';
 
       try {
         if (window.DuffelComponents) {

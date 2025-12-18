@@ -42,8 +42,34 @@ app.use('/api/hotels', hotelRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
+import fs from 'fs';
 app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
+    const indexPath = path.join(__dirname, '../dist/index.html');
+
+    fs.readFile(indexPath, 'utf8', (err, htmlData) => {
+        if (err) {
+            console.error('Error reading index.html', err);
+            return res.status(500).send('Error loading app');
+        }
+
+        // Inject Runtime Environment Variables
+        const envScript = `
+          <script>
+            window.__ENV__ = {
+              VITE_SUPABASE_URL: "${process.env.VITE_SUPABASE_URL || ''}",
+              VITE_SUPABASE_ANON_KEY: "${process.env.VITE_SUPABASE_ANON_KEY || ''}",
+              VITE_DUFFEL_PUBLIC_KEY: "${process.env.VITE_DUFFEL_PUBLIC_KEY || ''}",
+              VITE_WEB3AUTH_CLIENT_ID: "${process.env.VITE_WEB3AUTH_CLIENT_ID || ''}",
+              VITE_DUFFEL_CHECKOUT_URL: "${process.env.VITE_DUFFEL_CHECKOUT_URL || ''}"
+            };
+          </script>
+        `;
+
+        // Inject into <head>
+        const finalHtml = htmlData.replace('</head>', `${envScript}</head>`);
+
+        res.send(finalHtml);
+    });
 });
 
 app.listen(port, '0.0.0.0', () => {
