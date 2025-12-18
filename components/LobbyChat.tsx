@@ -778,7 +778,12 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                   className={`relative shrink-0 group flex flex-col items-center gap-1 ${!isOnline ? 'opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100' : ''}`}
                 >
                   <div className="relative">
-                    <img src={user.avatar} className={`w-10 h-10 object-cover rounded-full border-2 transition-colors ${user.id === currentUser.id ? 'border-green-400' : hasIncoming ? 'border-yellow-400 animate-pulse' : isAccepted ? 'border-blue-300' : 'border-brand-400 group-hover:border-white'}`} alt={user.name} />
+                    <img
+                      src={user.avatar}
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150?u=fallback'; }}
+                      className={`w-10 h-10 object-cover rounded-full border-2 transition-colors ${user.id === currentUser.id ? 'border-green-400' : hasIncoming ? 'border-yellow-400 animate-pulse' : isAccepted ? 'border-blue-300' : 'border-brand-400 group-hover:border-white'}`}
+                      alt={user.name}
+                    />
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-brand-600 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                     {hasIncoming && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">!</div>}
                   </div>
