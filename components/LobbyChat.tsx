@@ -15,7 +15,6 @@ interface LobbyChatProps {
   onClose: () => void;
   onNotify: (notification: NotificationItem) => void;
   isOpen: boolean;
-  onUnreadChange: (count: number) => void;
 }
 
 // Haversine formula to calculate distance in km

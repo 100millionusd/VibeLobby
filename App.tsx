@@ -3,7 +3,7 @@ import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Spark
 import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
 import { ScoredHotel, User } from './types';
-import { api } from './services/api';
+import { supabase } from './services/supabaseClient';
 import { useAuth } from './contexts/AuthContext';
 // AffiliateDeepLinker removed - we are now an OTA using Duffel
 import SearchCard from './components/SearchCard';
@@ -21,6 +21,49 @@ const App: React.FC = () => {
 
   // App State
   const [step, setStep] = useState<'home' | 'results' | 'details'>('home');
+
+  // Notification State
+  const [activeNotification, setActiveNotification] = useState<NotificationItem | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Flow State
+  const [showBooking, setShowBooking] = useState(false);
+  const [showLobby, setShowLobby] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // GLOBAL UNREAD LISTENER
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel('global_notifications');
+
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `recipient_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log("Global Notification Received:", payload);
+          setUnreadCount(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user?.id]);
+
+  // Reset unread count when lobby opens
+  useEffect(() => {
+    if (showLobby) {
+      setUnreadCount(0);
+    }
+  }, [showLobby]);
 
   // Search State
   const [selectedInterest, setSelectedInterest] = useState<string>('');
@@ -43,17 +86,8 @@ const App: React.FC = () => {
   // Gallery State
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
-  // Flow State
-  const [showBooking, setShowBooking] = useState(false);
-  const [showLobby, setShowLobby] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
   // Legal Modal State
   const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
-
-  // Notification State
-  const [activeNotification, setActiveNotification] = useState<NotificationItem | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   // SEARCH HANDLER
   const handleSearch = async () => {
@@ -313,7 +347,7 @@ const App: React.FC = () => {
                 onClick={handleSearch}
                 disabled={(!selectedInterest && !customInterest) || isAnalyzing}
                 className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center transition-all
-                  ${(!selectedInterest && !customInterest) || isAnalyzing
+                ${(!selectedInterest && !customInterest) || isAnalyzing
                     ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                     : 'bg-brand-600 text-white hover:bg-brand-700'}`}
               >
@@ -423,7 +457,7 @@ const App: React.FC = () => {
                       <div
                         key={idx}
                         className={`h-1.5 rounded-full transition-all shadow-sm
-                          ${idx === detailImageIndex ? 'bg-white w-6' : 'bg-white/50 w-1.5'}`}
+                        ${idx === detailImageIndex ? 'bg-white w-6' : 'bg-white/50 w-1.5'}`}
                       />
                     ))}
                   </div>
@@ -561,7 +595,6 @@ const App: React.FC = () => {
             onClose={() => setShowLobby(false)}
             onNotify={setActiveNotification}
             isOpen={showLobby}
-            onUnreadChange={(count) => setUnreadCount(count)}
           />
         </div>
       )}
