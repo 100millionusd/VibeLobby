@@ -163,6 +163,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   // CHAT STATE
   const [lobbyMessages, setLobbyMessages] = useState<ChatMessage[]>([]);
   const [privateMessages, setPrivateMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const [input, setInput] = useState('');
   const [pendingImage, setPendingImage] = useState<string | null>(null);
@@ -259,7 +260,11 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               // Notify if not currently viewing this chat OR if chat is closed
               if (!isOpen || activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
 
-                // Local unread logic removed - handled globally in App.tsx
+                // Increment Unread Count
+                setUnreadCounts(prev => ({
+                  ...prev,
+                  [m.user_id]: (prev[m.user_id] || 0) + 1
+                }));
 
                 onNotify({
                   id: Date.now().toString(),
@@ -593,6 +598,8 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       // Load Private History
       api.chat.getPrivateHistory(currentUser.id, user.id).then(msgs => {
         setPrivateMessages(prev => ({ ...prev, [user.id]: msgs }));
+        // Clear unread count
+        setUnreadCounts(prev => ({ ...prev, [user.id]: 0 }));
       });
     } else {
       // Open Nudge Prompt
@@ -840,6 +847,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                     />
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-brand-600 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                     {hasIncoming && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">!</div>}
+                    {unreadCounts[user.id] > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">{unreadCounts[user.id]}</div>}
                   </div>
                   <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? 'You' : user.name}</span>
                 </button>
