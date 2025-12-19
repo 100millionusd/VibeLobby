@@ -4,6 +4,7 @@ import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
 import { ScoredHotel, User } from './types';
 import { supabase } from './services/supabaseClient';
+import { api } from './services/api';
 import { useAuth } from './contexts/AuthContext';
 // AffiliateDeepLinker removed - we are now an OTA using Duffel
 import SearchCard from './components/SearchCard';
