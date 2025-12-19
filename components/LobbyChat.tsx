@@ -261,15 +261,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               if (!isOpen || activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
 
                 // Increment Unread Count
-                console.log("Incrementing unread count for:", m.user_id);
-                setUnreadCounts(prev => {
-                  const newCount = (prev[m.user_id] || 0) + 1;
-                  console.log(`Unread count for ${m.user_id} is now: ${newCount}`);
-                  return {
-                    ...prev,
-                    [m.user_id]: newCount
-                  };
-                });
+                setUnreadCounts(prev => ({
+                  ...prev,
+                  [m.user_id]: (prev[m.user_id] || 0) + 1
+                }));
 
                 onNotify({
                   id: Date.now().toString(),
@@ -829,17 +824,13 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
         {/* Online Users List (Only in Lobby View) */}
         {activeView === 'lobby' && (
-          <div className="mt-4 flex gap-3 overflow-x-auto no-scrollbar pb-1">
+          <div className="mt-4 flex gap-3 overflow-x-auto no-scrollbar py-2 px-1">
             {/* Show all members if granted, otherwise ONLY recent contacts */}
             {(isAccessGranted ? displayMembers : recentContacts).map(user => {
               // Check if there is a pending nudge from this user
               const hasIncoming = nudges.some(n => n.fromUserId === user.id && n.toUserId === currentUser.id && n.status === 'pending');
               const isAccepted = nudges.some(n => (n.fromUserId === user.id && n.toUserId === currentUser.id) || (n.fromUserId === currentUser.id && n.toUserId === user.id) && n.status === 'accepted');
               const isOnline = onlineMembers.some(u => u.id === user.id);
-
-              if (unreadCounts[user.id] > 0) {
-                console.log(`Rendering avatar for ${user.id} with unread count: ${unreadCounts[user.id]}`);
-              }
 
               return (
                 <button
@@ -856,7 +847,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                     />
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-brand-600 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                     {hasIncoming && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">!</div>}
-                    {unreadCounts[user.id] > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">{unreadCounts[user.id]}</div>}
+                    {unreadCounts[user.id] > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white shadow-sm">{unreadCounts[user.id]}</div>}
                   </div>
                   <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? 'You' : user.name}</span>
                 </button>
