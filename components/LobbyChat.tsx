@@ -774,6 +774,25 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           </div>
           <button onClick={onClose} className="text-white/80 hover:text-white p-1">✕</button>
         </div>
+        <div className="flex justify-end px-4 pb-2">
+          <button
+            onClick={async () => {
+              try {
+                if ('setAppBadge' in navigator) {
+                  await navigator.setAppBadge(5);
+                  alert("Badge set to 5. Check home screen.");
+                } else {
+                  alert("Badging API not supported on this device.");
+                }
+              } catch (e) {
+                alert("Badge Error: " + e);
+              }
+            }}
+            className="text-[10px] bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded"
+          >
+            Test Badge
+          </button>
+        </div>
 
 
 
