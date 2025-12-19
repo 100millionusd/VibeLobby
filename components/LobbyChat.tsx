@@ -35,23 +35,18 @@ const deg2rad = (deg: number) => {
   return deg * (Math.PI / 180);
 };
 
-const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, initialMembers, onClose, onNotify, isOpen, onUnreadChange }) => {
+const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, initialMembers, onClose, onNotify, isOpen }) => {
   const { grantDigitalKey } = useAuth();
-
-  // Unread State
-  const [localUnreadCount, setLocalUnreadCount] = useState(0);
-
-  // Reset unread when opened
-  useEffect(() => {
-    if (isOpen) {
-      setLocalUnreadCount(0);
-      onUnreadChange(0);
-    }
-  }, [isOpen, onUnreadChange]);
 
   // --- VERIFICATION STATE ---
   // Access is now always granted (Lobby is open)
   const isAccessGranted = true;
+
+  // Restore hasDigitalKey for UI purposes (Verified Badge)
+  const validKey = currentUser.digitalKeys?.find(k =>
+    k.hotelId === hotel.id && k.status === 'active'
+  );
+  const hasDigitalKey = !!validKey;
 
   // VIEW STATE: 'lobby' or 'private'
   const [activeView, setActiveView] = useState<'lobby' | 'private'>('lobby');
@@ -151,13 +146,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               // Notify if not currently viewing this chat OR if chat is closed
               if (!isOpen || activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
 
-                if (!isOpen) {
-                  setLocalUnreadCount(prev => {
-                    const newCount = prev + 1;
-                    onUnreadChange(newCount);
-                    return newCount;
-                  });
-                }
+                // Local unread logic removed - handled globally in App.tsx
 
                 onNotify({
                   id: Date.now().toString(),
