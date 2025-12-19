@@ -248,7 +248,11 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               applicationServerKey: urlBase64ToUint8Array(vapidKey)
             });
 
-            await api.chat.subscribeToPush(subscription, currentUser.id);
+            // CRITICAL: Explicitly convert to JSON to ensure keys are included
+            const subJson = subscription.toJSON();
+            console.log('Push Subscription JSON:', subJson);
+
+            await api.chat.subscribeToPush(subJson, currentUser.id);
             console.log('Push Subscribed');
           }
         } catch (err) {
@@ -586,6 +590,23 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             </div>
           </div>
           <button onClick={onClose} className="text-white/80 hover:text-white p-1">✕</button>
+        </div>
+
+        {/* Debug / Test Push Button (Temporary) */}
+        <div className="flex justify-end px-4 pb-2">
+          <button
+            onClick={async () => {
+              try {
+                await api.chat.sendMessage(hotel.id, "Test Notification 🔔", currentUser, true, undefined, currentUser.id);
+                alert("Test notification sent! Close the app to see it.");
+              } catch (e) {
+                alert("Failed to send test: " + e);
+              }
+            }}
+            className="text-[10px] bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded"
+          >
+            Test Push
+          </button>
         </div>
 
         {/* Online Users List (Only in Lobby View) */}
