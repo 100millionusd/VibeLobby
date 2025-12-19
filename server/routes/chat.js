@@ -58,6 +58,8 @@ router.post('/send', async (req, res) => {
         if (isPrivate && recipientId) {
             (async () => {
                 try {
+                    console.log(`[Push] Attempting to notify user ${recipientId}`);
+
                     // Get recipient's subscriptions
                     const { data: subs } = await supabaseAdmin
                         .from('push_subscriptions')
@@ -65,6 +67,8 @@ router.post('/send', async (req, res) => {
                         .eq('user_id', recipientId);
 
                     if (subs && subs.length > 0) {
+                        console.log(`[Push] Found ${subs.length} subscriptions for user ${recipientId}`);
+
                         const payload = JSON.stringify({
                             title: `New Message from ${user.name}`,
                             body: text || 'Sent an image',
@@ -75,7 +79,7 @@ router.post('/send', async (req, res) => {
                         const importWebPush = await import('web-push'); // Dynamic import to avoid top-level issues if not init
                         const webpush = importWebPush.default;
 
-                        subs.forEach(sub => {
+                        const promises = subs.map(sub => {
                             const pushConfig = {
                                 endpoint: sub.endpoint,
                                 keys: {
@@ -83,17 +87,30 @@ router.post('/send', async (req, res) => {
                                     auth: sub.auth
                                 }
                             };
-                            webpush.sendNotification(pushConfig, payload).catch(err => {
-                                console.error("Push Failed", err);
-                                if (err.statusCode === 410) {
-                                    // Subscription expired, delete it
-                                    supabaseAdmin.from('push_subscriptions').delete().eq('id', sub.id);
+
+                            // iOS requires 'urgency: high' for immediate delivery in some cases
+                            return webpush.sendNotification(pushConfig, payload, {
+                                headers: {
+                                    'Urgency': 'high'
                                 }
-                            });
+                            })
+                                .then(() => console.log(`[Push] Sent successfully to ${sub.id}`))
+                                .catch(err => {
+                                    console.error(`[Push] Failed for ${sub.id}:`, err.statusCode, err.message);
+                                    if (err.statusCode === 410) {
+                                        // Subscription expired, delete it
+                                        console.log(`[Push] Deleting expired subscription ${sub.id}`);
+                                        supabaseAdmin.from('push_subscriptions').delete().eq('id', sub.id);
+                                    }
+                                });
                         });
+
+                        await Promise.all(promises);
+                    } else {
+                        console.log(`[Push] No subscriptions found for user ${recipientId}`);
                     }
                 } catch (pushErr) {
-                    console.error("Push Notification Error:", pushErr);
+                    console.error("[Push] Critical Error:", pushErr);
                 }
             })();
         }
