@@ -241,9 +241,15 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             }
             // If I am the recipient, add to my chat with sender
             else if (m.recipient_id === currentUser.id) {
+              console.log("Processing Incoming Private Message from:", m.user_id);
               setPrivateMessages(prev => {
                 const current = prev[m.user_id] || [];
-                if (current.find(msg => msg.id === newMsg.id)) return prev;
+                console.log("Current Messages for sender:", current.length);
+                if (current.find(msg => msg.id === newMsg.id)) {
+                  console.log("Duplicate message ignored");
+                  return prev;
+                }
+                console.log("Adding new message to state");
                 return {
                   ...prev,
                   [m.user_id]: [...current, newMsg]
