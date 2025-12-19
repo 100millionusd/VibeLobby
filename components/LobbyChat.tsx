@@ -747,6 +747,21 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     }
   });
 
+  // Include authors from lobby history (Offline Nudges)
+  lobbyMessages.forEach(msg => {
+    if (msg.userId === 'system' || msg.userId === currentUser.id) return;
+    if (!allDisplayUsers.find(u => u.id === msg.userId)) {
+      allDisplayUsers.push({
+        id: msg.userId,
+        name: msg.userName,
+        avatar: msg.userAvatar,
+        bio: '', // info not available in message
+        isGuest: false,
+        digitalKeys: []
+      });
+    }
+  });
+
   const displayMembers = allDisplayUsers.slice(0, 10); // Show more users now
 
   // --- RENDER: MAIN CHAT ---
