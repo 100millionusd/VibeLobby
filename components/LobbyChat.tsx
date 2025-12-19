@@ -135,6 +135,13 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   // component's main return block, as it's an overlay.
 
   const [isAccessGranted, setIsAccessGranted] = useState(hasDigitalKey);
+
+  // Sync access state when key is granted via AuthContext (e.g. after booking)
+  useEffect(() => {
+    if (hasDigitalKey && !isAccessGranted) {
+      setIsAccessGranted(true);
+    }
+  }, [hasDigitalKey]);
   const [verificationMode, setVerificationMode] = useState<'gps' | 'booking' | null>(null);
 
   // GPS State
