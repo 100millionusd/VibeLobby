@@ -171,6 +171,30 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                             />
                             <div className="text-right text-[10px] text-gray-400">{bio.length}/100</div>
                         </div>
+
+                        {/* DIGITAL KEYS / BOOKINGS SECTION */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">My Bookings</label>
+                            {user.digitalKeys && user.digitalKeys.length > 0 ? (
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                    {user.digitalKeys.map((key, idx) => (
+                                        <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center text-sm">
+                                            <div>
+                                                <div className="font-bold text-gray-800">{key.hotelName}</div>
+                                                <div className="text-xs text-gray-500">{new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}</div>
+                                            </div>
+                                            <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                                {key.status === 'active' ? 'Active' : key.status}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-gray-400 italic bg-gray-50 p-4 rounded-xl text-center border border-dashed border-gray-200">
+                                    No active bookings found.
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="mt-8 flex gap-3">
