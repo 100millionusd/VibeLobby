@@ -261,10 +261,20 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               if (!isOpen || activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
 
                 // Increment Unread Count
-                setUnreadCounts(prev => ({
-                  ...prev,
-                  [m.user_id]: (prev[m.user_id] || 0) + 1
-                }));
+                setUnreadCounts(prev => {
+                  const newCounts = {
+                    ...prev,
+                    [m.user_id]: (prev[m.user_id] || 0) + 1
+                  };
+
+                  // Update App Badge
+                  if ('setAppBadge' in navigator) {
+                    const totalUnread = Object.values(newCounts).reduce((a: number, b: number) => a + b, 0);
+                    navigator.setAppBadge(totalUnread).catch(e => console.error("Badge error", e));
+                  }
+
+                  return newCounts;
+                });
 
                 onNotify({
                   id: Date.now().toString(),
@@ -599,7 +609,21 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       api.chat.getPrivateHistory(currentUser.id, user.id).then(msgs => {
         setPrivateMessages(prev => ({ ...prev, [user.id]: msgs }));
         // Clear unread count
-        setUnreadCounts(prev => ({ ...prev, [user.id]: 0 }));
+        setUnreadCounts(prev => {
+          const newCounts = { ...prev, [user.id]: 0 };
+
+          // Update App Badge
+          if ('setAppBadge' in navigator) {
+            const totalUnread = Object.values(newCounts).reduce((a: number, b: number) => a + b, 0);
+            if (totalUnread === 0) {
+              navigator.clearAppBadge().catch(e => console.error("Badge clear error", e));
+            } else {
+              navigator.setAppBadge(totalUnread).catch(e => console.error("Badge error", e));
+            }
+          }
+
+          return newCounts;
+        });
       });
     } else {
       // Open Nudge Prompt
