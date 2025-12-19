@@ -72,7 +72,8 @@ router.post('/send', async (req, res) => {
                         const payload = JSON.stringify({
                             title: `New Message from ${user.name}`,
                             body: text || 'Sent an image',
-                            url: `/?chat=${user.id}` // Deep link logic (simplified)
+                            url: `/?chat=${user.id}`,
+                            sound: 'default' // Hint for some processing logic if needed
                         });
 
                         // Send to all user's devices
