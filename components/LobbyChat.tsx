@@ -172,9 +172,41 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. INITIAL LOAD
-  // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
+  // PUSH NOTIFICATIONS SETUP
+  const setupPush = async () => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        console.log('SW Registered');
 
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const vapidKey = (window as any).__ENV__?.VITE_VAPID_PUBLIC_KEY || import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
+          if (!vapidKey) {
+            console.warn("VITE_VAPID_PUBLIC_KEY is missing. Push notifications disabled.");
+            return;
+          }
+
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey)
+          });
+
+          // CRITICAL: Explicitly convert to JSON to ensure keys are included
+          const subJson = subscription.toJSON();
+          console.log('Push Subscription JSON:', subJson);
+
+          await api.chat.subscribeToPush(subJson, currentUser.id);
+          console.log('Push Subscribed');
+        }
+      } catch (err) {
+        console.error('Push Setup Failed:', err);
+      }
+    }
+  };
+
+  // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
   useEffect(() => {
     // Load history
     api.chat.getHistory(hotel.id).then(msgs => {
@@ -360,39 +392,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
 
 
-    // PUSH NOTIFICATIONS SETUP
-    const setupPush = async () => {
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('SW Registered');
 
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            const vapidKey = (window as any).__ENV__?.VITE_VAPID_PUBLIC_KEY || import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
-            if (!vapidKey) {
-              console.warn("VITE_VAPID_PUBLIC_KEY is missing. Push notifications disabled.");
-              return;
-            }
-
-            const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(vapidKey)
-            });
-
-            // CRITICAL: Explicitly convert to JSON to ensure keys are included
-            const subJson = subscription.toJSON();
-            console.log('Push Subscription JSON:', subJson);
-
-            await api.chat.subscribeToPush(subJson, currentUser.id);
-            console.log('Push Subscribed');
-          }
-        } catch (err) {
-          console.error('Push Setup Failed:', err);
-        }
-      }
-    };
     setupPush();
 
     return () => {
