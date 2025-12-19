@@ -230,17 +230,25 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             // Handle Private Message
             // If I am the sender, add to my chat with recipient
             if (m.user_id === currentUser.id && m.recipient_id) {
-              setPrivateMessages(prev => ({
-                ...prev,
-                [m.recipient_id]: [...(prev[m.recipient_id] || []), newMsg]
-              }));
+              setPrivateMessages(prev => {
+                const current = prev[m.recipient_id] || [];
+                if (current.find(msg => msg.id === newMsg.id)) return prev;
+                return {
+                  ...prev,
+                  [m.recipient_id]: [...current, newMsg]
+                };
+              });
             }
             // If I am the recipient, add to my chat with sender
             else if (m.recipient_id === currentUser.id) {
-              setPrivateMessages(prev => ({
-                ...prev,
-                [m.user_id]: [...(prev[m.user_id] || []), newMsg]
-              }));
+              setPrivateMessages(prev => {
+                const current = prev[m.user_id] || [];
+                if (current.find(msg => msg.id === newMsg.id)) return prev;
+                return {
+                  ...prev,
+                  [m.user_id]: [...current, newMsg]
+                };
+              });
 
               // Notify if not currently viewing this chat OR if chat is closed
               if (!isOpen || activeView !== 'private' || selectedPrivateUser?.id !== m.user_id) {
@@ -624,7 +632,21 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
     try {
       const recipientId = isPrivate && selectedPrivateUser ? selectedPrivateUser.id : undefined;
-      await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
+      const sentMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
+
+      // Optimistic / Immediate Update (don't wait for Realtime)
+      if (isPrivate && recipientId) {
+        setPrivateMessages(prev => {
+          const current = prev[recipientId] || [];
+          if (current.find(msg => msg.id === sentMsg.id)) return prev;
+          return { ...prev, [recipientId]: [...current, sentMsg] };
+        });
+      } else {
+        setLobbyMessages(prev => {
+          if (prev.find(msg => msg.id === sentMsg.id)) return prev;
+          return [...prev, sentMsg];
+        });
+      }
     } catch (err) {
       console.error("Failed to send message:", err);
       onNotify({
