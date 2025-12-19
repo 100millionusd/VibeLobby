@@ -751,76 +751,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           <button onClick={onClose} className="text-white/80 hover:text-white p-1">✕</button>
         </div>
 
-        {/* Debug / Test Push Button (Temporary) */}
-        <div className="flex justify-end px-4 pb-2">
-          <button
-            onClick={async () => {
-              try {
-                await api.chat.sendMessage(hotel.id, "Test Notification 🔔", currentUser, true, undefined, currentUser.id);
-                alert("Test notification sent! Close the app to see it.");
-              } catch (e) {
-                alert("Failed to send test: " + e);
-              }
-            }}
-            className="text-[10px] bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded"
-          >
-            Test Push
-          </button>
-        </div>
-        <div className="flex justify-end px-4 pb-2">
-          <button
-            onClick={async () => {
-              try {
-                if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                  alert("Push notifications not supported");
-                  return;
-                }
 
-                // 1. Check Permission
-                let permission = Notification.permission;
-                if (permission !== 'granted') {
-                  permission = await Notification.requestPermission();
-                }
-
-                if (permission !== 'granted') {
-                  alert("Notifications blocked. Please enable them in browser settings.");
-                  return;
-                }
-
-                // 2. Ensure Service Worker & Subscription
-                const registration = await navigator.serviceWorker.ready;
-                const vapidKey = (window as any).__ENV__?.VITE_VAPID_PUBLIC_KEY || import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
-                if (!vapidKey) {
-                  alert("Missing VAPID Key");
-                  return;
-                }
-
-                let subscription = await registration.pushManager.getSubscription();
-                if (!subscription) {
-                  subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(vapidKey)
-                  });
-                }
-
-                // 3. Sync Subscription to Backend
-                await api.chat.subscribeToPush(subscription.toJSON(), currentUser.id);
-
-                // 4. Send Test
-                await api.chat.sendMessage(hotel.id, "Test Notification 🔔", currentUser, true, undefined, currentUser.id);
-                alert("Test notification sent! Close the app/tab now to see it.");
-
-              } catch (e) {
-                console.error(e);
-                alert("Failed: " + e);
-              }
-            }}
-            className="text-[10px] bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded shadow-sm"
-          >
-            Fix & Test Push
-          </button>
-        </div>
 
         {/* Online Users List (Only in Lobby View) */}
         {activeView === 'lobby' && (
