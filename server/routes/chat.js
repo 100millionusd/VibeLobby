@@ -209,4 +209,69 @@ router.post('/nudge/respond', async (req, res) => {
     }
 });
 
+// DELETE /api/chat/message/:id
+// Delete a specific message
+router.delete('/message/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.body; // We need to know who is asking
+
+        if (!userId) return res.status(400).json({ error: "Missing User ID" });
+
+        // 1. Verify ownership (only delete own messages)
+        const { data: message, error: fetchError } = await supabaseAdmin
+            .from('messages')
+            .select('user_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !message) {
+            return res.status(404).json({ error: "Message not found" });
+        }
+
+        if (message.user_id !== userId) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        // 2. Delete
+        const { error: deleteError } = await supabaseAdmin
+            .from('messages')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) throw deleteError;
+
+        res.json({ success: true, id });
+    } catch (error) {
+        console.error("Backend Delete Message Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/chat/conversation/:partnerId
+// Clear entire private conversation
+router.delete('/conversation/:partnerId', async (req, res) => {
+    try {
+        const { partnerId } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) return res.status(400).json({ error: "Missing User ID" });
+
+        // Delete messages where (user=me AND recipient=partner) OR (user=partner AND recipient=me)
+        // AND is_private = true
+        const { error } = await supabaseAdmin
+            .from('messages')
+            .delete()
+            .eq('is_private', true)
+            .or(`and(user_id.eq.${userId},recipient_id.eq.${partnerId}),and(user_id.eq.${partnerId},recipient_id.eq.${userId})`);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Backend Delete Conversation Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

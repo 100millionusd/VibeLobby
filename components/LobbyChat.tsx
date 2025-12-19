@@ -165,6 +165,26 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
+        (payload) => {
+          const oldRecord = payload.old as any;
+          console.log("Realtime Delete Received:", oldRecord.id);
+
+          // Remove from Lobby
+          setLobbyMessages(prev => prev.filter(m => m.id !== oldRecord.id));
+
+          // Remove from Private (Scan all)
+          setPrivateMessages(prev => {
+            const next = { ...prev };
+            for (const userId in next) {
+              next[userId] = next[userId].filter(m => m.id !== oldRecord.id);
+            }
+            return next;
+          });
+        }
+      )
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         const onlineUsers: User[] = [];
@@ -587,6 +607,27 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                   'Private Conversation'
                 )}
               </div>
+
+              {/* Clear Chat Button (Private Only) */}
+              {activeView === 'private' && selectedPrivateUser && (
+                <button
+                  onClick={async () => {
+                    if (confirm("Clear entire conversation? This cannot be undone.")) {
+                      try {
+                        // Optimistic
+                        setPrivateMessages(prev => ({ ...prev, [selectedPrivateUser.id]: [] }));
+                        await api.chat.deleteConversation(selectedPrivateUser.id, currentUser.id);
+                      } catch (err) {
+                        console.error("Clear chat failed", err);
+                        alert("Failed to clear chat");
+                      }
+                    }
+                  }}
+                  className="text-[10px] bg-white/20 hover:bg-red-500/80 text-white px-2 py-1 rounded ml-2 transition-colors"
+                >
+                  Clear Chat
+                </button>
+              )}
             </div>
           </div>
           <button onClick={onClose} className="text-white/80 hover:text-white p-1">✕</button>

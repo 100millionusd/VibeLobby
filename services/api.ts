@@ -250,6 +250,24 @@ export const api = {
         digitalKeys: [],
         isGuest: false
       }));
+    },
+
+    deleteMessage: async (messageId: string, userId: string) => {
+      const response = await fetch(`/api/chat/message/${messageId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      if (!response.ok) throw new Error("Failed to delete message");
+    },
+
+    deleteConversation: async (partnerId: string, userId: string) => {
+      const response = await fetch(`/api/chat/conversation/${partnerId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      if (!response.ok) throw new Error("Failed to delete conversation");
     }
 
   },
