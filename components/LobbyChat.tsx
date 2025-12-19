@@ -969,16 +969,40 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           <div className="flex items-center gap-3 mb-4">
             <img src={pendingNudgeUser.avatar} className="w-12 h-12 rounded-full object-cover border border-gray-200" alt="" />
             <div>
-              <div className="font-medium text-gray-900 mb-0.5">Nudge {pendingNudgeUser.name}</div>
-              <div className="text-xs text-gray-500">Sends a private chat invitation.</div>
+              <div className="font-medium text-gray-900 mb-0.5">
+                {nudges.some(n => n.fromUserId === pendingNudgeUser.id && n.toUserId === currentUser.id && n.status === 'pending')
+                  ? `Request from ${pendingNudgeUser.name}`
+                  : `Nudge ${pendingNudgeUser.name}`}
+              </div>
+              <div className="text-xs text-gray-500">
+                {nudges.some(n => n.fromUserId === pendingNudgeUser.id && n.toUserId === currentUser.id && n.status === 'pending')
+                  ? "Wants to chat privately."
+                  : "Sends a private chat invitation."}
+              </div>
             </div>
           </div>
-          <button
-            onClick={handleSendNudge}
-            className="w-full bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-200"
-          >
-            <Send size={16} /> Send Request
-          </button>
+
+          {(() => {
+            const incoming = nudges.find(n => n.fromUserId === pendingNudgeUser.id && n.toUserId === currentUser.id && n.status === 'pending');
+            if (incoming) {
+              return (
+                <button
+                  onClick={() => handleAcceptNudge(incoming.id)}
+                  className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                >
+                  <CheckCircle size={16} /> Accept Request
+                </button>
+              );
+            }
+            return (
+              <button
+                onClick={handleSendNudge}
+                className="w-full bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-200"
+              >
+                <Send size={16} /> Send Request
+              </button>
+            );
+          })()}
         </div>
       )}
 
