@@ -5,9 +5,10 @@ self.addEventListener('push', function (event) {
             body: data.body,
             icon: '/android-chrome-192x192.png',
             badge: '/android-chrome-192x192.png',
-            vibrate: [200, 100, 200], // Increased vibration pattern
-            tag: 'vibe-message', // Groups notifications
-            renotify: true, // Ensures sound/vibration plays for every new message
+            vibrate: [200, 100, 200],
+            tag: 'vibe-' + Date.now(), // Unique tag to prevent throttling/grouping issues
+            renotify: true,
+            title: data.title, // Add title here for completeness
             data: {
                 dateOfArrival: Date.now(),
                 primaryKey: '2',

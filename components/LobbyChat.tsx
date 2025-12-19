@@ -198,6 +198,9 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       setRecentContacts(contacts);
     });
 
+    // Setup Push Notifications
+    setupPush();
+
     // UNIFIED CHANNEL LOGIC
     const channel = supabase.channel(`lobby:${hotel.id}`);
 
