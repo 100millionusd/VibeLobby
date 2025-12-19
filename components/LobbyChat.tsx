@@ -212,8 +212,13 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           const subJson = subscription.toJSON();
           console.log('Push Subscription JSON:', subJson);
 
-          await api.chat.subscribeToPush(subJson, currentUser.id);
-          console.log('Push Subscribed');
+          // Subscribe to backend for persistence (Fire & Forget)
+          try {
+            await api.chat.subscribeToPush(subJson, currentUser.id);
+            console.log('Push Subscribed');
+          } catch (e) {
+            console.warn("Backend push sync warning:", e);
+          }
         }
       } catch (err) {
         console.error('Push Setup Failed:', err);
@@ -319,7 +324,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
                   // Update App Badge
                   if ('setAppBadge' in navigator) {
-                    const totalUnread = Object.values(newCounts).reduce((a: number, b: number) => a + b, 0);
+                    const totalUnread = Object.values(newCounts).reduce((a: number, b: unknown) => a + (b as number), 0);
                     navigator.setAppBadge(totalUnread).catch(e => console.error("Badge error", e));
                   }
 
@@ -656,9 +661,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       setNudges(prev => [...prev, newNudge]);
       setPendingNudgeUser(null); // Close the prompt
       onNotify({
+        id: Date.now().toString(),
         title: 'Nudge Sent!',
-        message: `Waiting for ${pendingNudgeUser.name} to accept.`,
-        type: 'success'
+        text: `Waiting for ${pendingNudgeUser.name} to accept.`,
+        type: 'message'
       });
     } catch (err) {
       console.error("Failed to send nudge:", err);
@@ -871,6 +877,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                 <img
                   src={msg.userAvatar}
                   alt={msg.userName}
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150?u=fallback'; }}
                   onClick={() => {
                     const u = displayMembers.find(m => m.id === msg.userId);
                     if (u) handleUserClick(u);
