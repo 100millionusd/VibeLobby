@@ -214,7 +214,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
           // Subscribe to backend for persistence (Fire & Forget)
           try {
-            await api.chat.subscribeToPush(subJson, currentUser.id);
+            await api.chat.subscribeToPush(subJson, currentUser);
             console.log('Push Subscribed');
           } catch (e) {
             console.warn("Backend push sync warning:", e);

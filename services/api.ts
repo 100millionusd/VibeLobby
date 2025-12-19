@@ -207,11 +207,11 @@ export const api = {
       };
     },
 
-    subscribeToPush: async (subscription: any, userId: string) => {
+    subscribeToPush: async (subscription: any, user: User) => {
       await fetch('/api/chat/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription, userId })
+        body: JSON.stringify({ subscription, user })
       });
     },
 

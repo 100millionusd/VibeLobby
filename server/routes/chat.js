@@ -127,13 +127,22 @@ router.post('/send', async (req, res) => {
 // POST /api/chat/subscribe
 router.post('/subscribe', async (req, res) => {
     try {
-        const { subscription, userId } = req.body;
-        if (!subscription || !userId) return res.status(400).json({ error: "Missing data" });
+        const { subscription, user } = req.body;
+        if (!subscription || !user || !user.id) return res.status(400).json({ error: "Missing data" });
 
+        // 1. Ensure User Exists
+        await supabaseAdmin.from('users').upsert({
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar,
+            bio: user.bio
+        });
+
+        // 2. Add Subscription
         const { error } = await supabaseAdmin
             .from('push_subscriptions')
             .upsert({
-                user_id: userId,
+                user_id: user.id,
                 endpoint: subscription.endpoint,
                 p256dh: subscription.keys.p256dh,
                 auth: subscription.keys.auth
