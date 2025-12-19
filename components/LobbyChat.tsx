@@ -138,10 +138,18 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   // Sync access state when key is granted via AuthContext (e.g. after booking)
   useEffect(() => {
+    console.log('[LobbyChat] Access Check:', {
+      hotelId: hotel.id,
+      userKeys: currentUser.digitalKeys,
+      hasDigitalKey,
+      isAccessGranted
+    });
+
     if (hasDigitalKey && !isAccessGranted) {
+      console.log('[LobbyChat] Granting Access via Effect');
       setIsAccessGranted(true);
     }
-  }, [hasDigitalKey]);
+  }, [hasDigitalKey, hotel.id, currentUser.digitalKeys]);
   const [verificationMode, setVerificationMode] = useState<'gps' | 'booking' | null>(null);
 
   // GPS State
