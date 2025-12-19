@@ -50,24 +50,8 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   }, [isOpen, onUnreadChange]);
 
   // --- VERIFICATION STATE ---
-  const validKey = currentUser.digitalKeys?.find(k =>
-    k.hotelId === hotel.id && k.status === 'active'
-  );
-
-  const hasDigitalKey = !!validKey;
-
-  const [isAccessGranted, setIsAccessGranted] = useState(hasDigitalKey);
-  const [verificationMode, setVerificationMode] = useState<'gps' | 'booking' | null>(null);
-
-  // GPS State
-  const [gpsStatus, setGpsStatus] = useState<'pending' | 'verifying' | 'denied' | 'success'>('pending');
-  const [gpsMessage, setGpsMessage] = useState('');
-
-  // Booking Upload State
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [bookingStatus, setBookingStatus] = useState<'idle' | 'analyzing' | 'success' | 'error'>('idle');
-  const [analysisText, setAnalysisText] = useState('');
-  const [errorText, setErrorText] = useState('');
+  // Access is now always granted (Lobby is open)
+  const isAccessGranted = true;
 
   // VIEW STATE: 'lobby' or 'private'
   const [activeView, setActiveView] = useState<'lobby' | 'private'>('lobby');
@@ -376,70 +360,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
 
 
-  // --- LOCATION VERIFICATION ---
-  const handleVerifyLocation = () => {
-    if (!navigator.geolocation) {
-      setGpsStatus('denied');
-      setGpsMessage("Browser doesn't support GPS.");
-      return;
-    }
-    setGpsStatus('verifying');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-        const hotelLat = hotel.coordinates?.lat || 52.5200;
-        const hotelLng = hotel.coordinates?.lng || 13.4050;
-        const dist = calculateDistance(userLat, userLng, hotelLat, hotelLng);
-        if (dist < 3.0) {
-          setGpsStatus('success');
-          setGpsMessage("Location Verified! You are on site.");
-          setTimeout(() => setIsAccessGranted(true), 1500);
-        } else {
-          setGpsStatus('denied');
-          setGpsMessage(`You are ${dist.toFixed(1)}km away. You must be at the hotel to join.`);
-        }
-      },
-      (error) => {
-        setGpsStatus('denied');
-        setGpsMessage("Location access denied or signal weak.");
-      }
-    );
-  };
 
-  // --- BOOKING VERIFICATION ---
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadedFile(e.target.files[0]);
-      setBookingStatus('idle');
-      setErrorText('');
-    }
-  };
-
-  const handleVerifyBooking = async () => {
-    if (!uploadedFile) return;
-    setBookingStatus('analyzing');
-    setAnalysisText('AI is scanning receipt...');
-    const result = await verifyBookingReceipt(uploadedFile, hotel.name, hotel.city);
-    if (result.verified) {
-      setBookingStatus('success');
-      const mockConfirmation = {
-        success: true,
-        data: {
-          booking_reference: "OCR-" + Math.floor(Math.random() * 10000),
-          hotel: { id: hotel.id, name: hotel.name },
-          room: { name: "Uploaded Receipt Room" },
-          dates: { check_in: new Date().toISOString(), check_out: new Date(Date.now() + 86400000 * 3).toISOString() },
-          lobby_access: { granted: true, chat_room_id: `chat_${hotel.id}`, valid_from: new Date().toISOString(), valid_until: new Date(Date.now() + 86400000 * 3).toISOString() }
-        }
-      };
-      grantDigitalKey(mockConfirmation);
-      setTimeout(() => setIsAccessGranted(true), 1500);
-    } else {
-      setBookingStatus('error');
-      setErrorText(result.message);
-    }
-  };
 
   // --- IMAGE COMPRESSION ---
   const compressImage = (file: File): Promise<string> => {
@@ -610,20 +531,16 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
             <div>
               <h2 className="font-bold text-lg leading-tight flex items-center">
-                {activeView === 'lobby' ? (isAccessGranted ? `${hotel.name} Lobby` : 'Lobby Locked') : selectedPrivateUser?.name}
+                {activeView === 'lobby' ? `${hotel.name} Lobby` : selectedPrivateUser?.name}
                 {activeView === 'lobby' && isAccessGranted && <span className="ml-2 bg-white/20 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">#{interest}</span>}
               </h2>
               <div className="text-brand-100 text-xs flex items-center gap-1.5">
                 {activeView === 'lobby' ? (
-                  isAccessGranted ? (
-                    <>
-                      <span className={`w-2 h-2 rounded-full ${hasDigitalKey ? 'bg-blue-300' : 'bg-green-400'} animate-pulse`} />
-                      {hasDigitalKey ? 'Verified Guest Access' : 'Live at Hotel'} • {onlineMembers.length} Online
-                      <span className="ml-2 text-[8px] opacity-50">({connectionStatus})</span>
-                    </>
-                  ) : (
-                    <span className="flex items-center gap-1"><Lock size={10} /> Verification Required</span>
-                  )
+                  <>
+                    <span className={`w-2 h-2 rounded-full ${hasDigitalKey ? 'bg-blue-300' : 'bg-green-400'} animate-pulse`} />
+                    {hasDigitalKey ? 'Verified Guest Access' : 'Live at Hotel'} • {onlineMembers.length} Online
+                    <span className="ml-2 text-[8px] opacity-50">({connectionStatus})</span>
+                  </>
                 ) : (
                   'Private Conversation'
                 )}
@@ -716,129 +633,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto bg-gray-50 relative">
 
-        {/* VERIFICATION OVERLAY (Embedded) */}
-        {activeView === 'lobby' && !isAccessGranted && (
-          <div className="absolute inset-0 z-20 bg-gray-50 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
-            {verificationMode === null && (
-              <>
-                <div className="w-20 h-20 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                  <Lock size={40} />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Residents Only</h3>
-                <p className="text-gray-500 mb-8 max-w-xs">
-                  To keep the vibe real, this chat is locked for verified guests of <strong>{hotel.name}</strong>.
-                </p>
-                <div className="flex flex-col gap-3 w-full">
-                  <button
-                    onClick={() => { setVerificationMode('gps'); handleVerifyLocation(); }}
-                    className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <MapPin size={20} /> I'm here now (GPS)
-                  </button>
-                  <button
-                    onClick={() => setVerificationMode('booking')}
-                    className="w-full bg-white border-2 border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
-                  >
-                    <Key size={20} /> I have a Booking
-                  </button>
-                </div>
-              </>
-            )}
 
-            {verificationMode === 'gps' && (
-              <>
-                {gpsStatus === 'verifying' && (
-                  <>
-                    <Loader2 size={48} className="text-brand-600 animate-spin mb-6" />
-                    <h3 className="text-xl font-bold text-gray-900">Checking Location...</h3>
-                    <p className="text-sm text-gray-500 mt-2">Triangulating satellite signal.</p>
-                  </>
-                )}
-                {gpsStatus === 'success' && (
-                  <>
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-                      <CheckCircle size={40} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Access Granted</h3>
-                    <p className="text-sm text-gray-600 font-medium bg-gray-200 px-3 py-1 rounded-full mb-6">{gpsMessage}</p>
-                  </>
-                )}
-                {gpsStatus === 'denied' && (
-                  <>
-                    <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
-                      <AlertTriangle size={40} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h3>
-                    <p className="text-gray-500 mb-6 max-w-xs mx-auto">{gpsMessage}</p>
-                    <button onClick={handleVerifyLocation} className="text-brand-600 font-bold hover:underline mb-4">Try GPS Again</button>
-                    <div className="w-full h-px bg-gray-200 my-2"></div>
-                    <button onClick={() => setVerificationMode('booking')} className="text-gray-500 text-sm mt-4 hover:text-gray-900">Not here yet? Use Booking ID</button>
-                  </>
-                )}
-              </>
-            )}
-
-            {verificationMode === 'booking' && (
-              <>
-                {bookingStatus === 'success' ? (
-                  <>
-                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-                      <Key size={40} />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Booking Verified</h3>
-                    <p className="text-sm text-gray-500 mb-6">Welcome, future guest! Your Digital Key is active.</p>
-                  </>
-                ) : (
-                  <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                      <button onClick={() => setVerificationMode(null)} className="text-gray-400 hover:text-gray-900"><ChevronLeft /></button>
-                      <h3 className="font-bold text-lg">Verify via Receipt</h3>
-                      <div className="w-6"></div>
-                    </div>
-
-                    {bookingStatus === 'analyzing' ? (
-                      <div className="flex flex-col items-center py-8">
-                        <div className="relative">
-                          <Sparkles size={48} className="text-brand-500 animate-pulse" />
-                          <Loader2 size={48} className="text-brand-200 animate-spin absolute top-0 left-0" />
-                        </div>
-                        <p className="mt-6 font-bold text-gray-800">{analysisText}</p>
-                        <p className="text-xs text-gray-400 mt-2">AI is reading your screenshot...</p>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-sm text-gray-500 mb-6 text-left leading-relaxed">
-                          Upload a screenshot of your <strong>Booking Confirmation</strong>.
-                          Our AI will verify the hotel name and dates instantly.
-                        </p>
-
-                        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 mb-6 hover:bg-gray-50 transition-colors relative cursor-pointer">
-                          <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                          <div className="flex flex-col items-center gap-2">
-                            {uploadedFile ? (
-                              <>
-                                <FileImage size={32} className="text-brand-500" />
-                                <span className="text-sm font-medium text-gray-900">{uploadedFile.name}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Upload size={32} className="text-gray-400" />
-                                <span className="text-sm font-medium text-brand-600">Tap to Upload Screenshot</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {bookingStatus === 'error' && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold mb-4">{errorText}</div>}
-                        <button onClick={handleVerifyBooking} disabled={!uploadedFile} className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">Verify & Unlock</button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
 
         {/* MESSAGES LIST */}
         <div className="p-4 space-y-4">
@@ -891,49 +686,51 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
           {isLoadingAi && <div className="text-center text-xs text-gray-400 flex justify-center items-center gap-1"><Sparkles size={10} className="animate-spin" /> Vibe AI is thinking...</div>}
           <div ref={messagesEndRef} />
         </div>
-      </div>
+      </div >
 
       {/* Input Area (Hidden if Lobby Locked) */}
-      {(activeView === 'private' || isAccessGranted) && (
-        <div className="p-3 bg-white border-t border-gray-100 shrink-0 z-30 relative">
-          {pendingImage && (
-            <div className="mb-2 flex items-start">
-              <div className="relative inline-block">
-                <img src={pendingImage} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 shadow-sm" />
-                <button onClick={() => setPendingImage(null)} className="absolute -top-2 -right-2 bg-gray-900 text-white rounded-full p-0.5 hover:bg-gray-700 shadow-md">
-                  <X size={14} />
-                </button>
+      {
+        (activeView === 'private' || isAccessGranted) && (
+          <div className="p-3 bg-white border-t border-gray-100 shrink-0 z-30 relative">
+            {pendingImage && (
+              <div className="mb-2 flex items-start">
+                <div className="relative inline-block">
+                  <img src={pendingImage} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 shadow-sm" />
+                  <button onClick={() => setPendingImage(null)} className="absolute -top-2 -right-2 bg-gray-900 text-white rounded-full p-0.5 hover:bg-gray-700 shadow-md">
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
-            {activeView === 'private' && (
-              <button onClick={() => chatFileInputRef.current?.click()} className="text-gray-400 hover:text-brand-600 transition-colors">
-                <ImageIcon size={20} />
-              </button>
             )}
-            <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatImageSelect} />
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={activeView === 'lobby' ? "Message the lobby..." : `Message ${selectedPrivateUser?.name}...`}
-              className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-500"
-              autoFocus
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() && !pendingImage}
-              className={`p-1.5 rounded-full transition-all ${input.trim() || pendingImage ? 'bg-brand-500 text-white shadow-md transform hover:scale-105' : 'text-gray-400'}`}
-            >
-              <Send size={16} />
-            </button>
+
+            <div className="flex items-center gap-2 bg-gray-100 rounded-2xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
+              {activeView === 'private' && (
+                <button onClick={() => chatFileInputRef.current?.click()} className="text-gray-400 hover:text-brand-600 transition-colors">
+                  <ImageIcon size={20} />
+                </button>
+              )}
+              <input type="file" ref={chatFileInputRef} className="hidden" accept="image/*" onChange={handleChatImageSelect} />
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder={activeView === 'lobby' ? "Message the lobby..." : `Message ${selectedPrivateUser?.name}...`}
+                className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-500"
+                autoFocus
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() && !pendingImage}
+                className={`p-1.5 rounded-full transition-all ${input.trim() || pendingImage ? 'bg-brand-500 text-white shadow-md transform hover:scale-105' : 'text-gray-400'}`}
+              >
+                <Send size={16} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
