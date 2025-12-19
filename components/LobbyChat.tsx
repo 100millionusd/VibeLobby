@@ -651,9 +651,19 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
   const handleSendNudge = async () => {
     if (!pendingNudgeUser) return;
-    const newNudge = await api.nudge.sendNudge(currentUser.id, pendingNudgeUser.id);
-    setNudges(prev => [...prev, newNudge]);
-    // Stay on the prompt but update status, handled by render logic
+    try {
+      const newNudge = await api.nudge.sendNudge(currentUser.id, pendingNudgeUser.id);
+      setNudges(prev => [...prev, newNudge]);
+      setPendingNudgeUser(null); // Close the prompt
+      onNotify({
+        title: 'Nudge Sent!',
+        message: `Waiting for ${pendingNudgeUser.name} to accept.`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error("Failed to send nudge:", err);
+      alert("Failed to send nudge. Please try again.");
+    }
   };
 
   const handleAcceptNudge = async (nudgeId: string) => {
