@@ -35,6 +35,22 @@ const deg2rad = (deg: number) => {
   return deg * (Math.PI / 180);
 };
 
+// Helper for VAPID key conversion
+const urlBase64ToUint8Array = (base64String: string) => {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
+
 const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, initialMembers, onClose, onNotify, isOpen }) => {
   const { grantDigitalKey } = useAuth();
 
@@ -310,19 +326,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       Notification.requestPermission();
     }
 
-    // Helper to convert VAPID key
-    const urlBase64ToUint8Array = (base64String: string) => {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-      const rawData = window.atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-      }
-      return outputArray;
-    };
+
 
     // PUSH NOTIFICATIONS SETUP
     const setupPush = async () => {
@@ -726,6 +730,60 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             className="text-[10px] bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded"
           >
             Test Push
+          </button>
+        </div>
+        <div className="flex justify-end px-4 pb-2">
+          <button
+            onClick={async () => {
+              try {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                  alert("Push notifications not supported");
+                  return;
+                }
+
+                // 1. Check Permission
+                let permission = Notification.permission;
+                if (permission !== 'granted') {
+                  permission = await Notification.requestPermission();
+                }
+
+                if (permission !== 'granted') {
+                  alert("Notifications blocked. Please enable them in browser settings.");
+                  return;
+                }
+
+                // 2. Ensure Service Worker & Subscription
+                const registration = await navigator.serviceWorker.ready;
+                const vapidKey = (window as any).__ENV__?.VITE_VAPID_PUBLIC_KEY || import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
+                if (!vapidKey) {
+                  alert("Missing VAPID Key");
+                  return;
+                }
+
+                let subscription = await registration.pushManager.getSubscription();
+                if (!subscription) {
+                  subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey)
+                  });
+                }
+
+                // 3. Sync Subscription to Backend
+                await api.chat.subscribeToPush(subscription.toJSON(), currentUser.id);
+
+                // 4. Send Test
+                await api.chat.sendMessage(hotel.id, "Test Notification 🔔", currentUser, true, undefined, currentUser.id);
+                alert("Test notification sent! Close the app/tab now to see it.");
+
+              } catch (e) {
+                console.error(e);
+                alert("Failed: " + e);
+              }
+            }}
+            className="text-[10px] bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded shadow-sm"
+          >
+            Fix & Test Push
           </button>
         </div>
 
