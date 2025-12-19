@@ -53,6 +53,7 @@ const App: React.FC = () => {
 
   // Notification State
   const [activeNotification, setActiveNotification] = useState<NotificationItem | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // SEARCH HANDLER
   const handleSearch = async () => {
@@ -549,17 +550,20 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* OVERLAY: LOBBY CHAT */}
-      {showLobby && selectedHotel && user && (
-        <LobbyChat
-          hotel={selectedHotel}
-          interest={activeSearchTerm}
-          currentUser={user}
-          // Pass the relevant users we fetched earlier to the lobby
-          initialMembers={relevantUsers}
-          onClose={() => setShowLobby(false)}
-          onNotify={setActiveNotification}
-        />
+      {/* OVERLAY: LOBBY CHAT (Always Mounted for Realtime) */}
+      {selectedHotel && user && (
+        <div className={showLobby ? 'block' : 'hidden'}>
+          <LobbyChat
+            hotel={selectedHotel}
+            interest={activeSearchTerm}
+            currentUser={user}
+            initialMembers={relevantUsers}
+            onClose={() => setShowLobby(false)}
+            onNotify={setActiveNotification}
+            isOpen={showLobby}
+            onUnreadChange={(count) => setUnreadCount(count)}
+          />
+        </div>
       )}
 
       {/* OVERLAY: LEGAL MODAL */}
@@ -625,10 +629,11 @@ const App: React.FC = () => {
         >
           <div className="relative">
             <MessageCircle size={28} />
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce">
+                {unreadCount}
+              </span>
+            )}
           </div>
           <span className="font-bold pr-1 hidden md:inline">Chats</span>
         </button>
