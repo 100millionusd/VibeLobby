@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, ChevronLeft, MoreVertical, User as UserIcon, MapPin, Lock, CheckCircle, AlertTriangle, Loader2, Key, Upload, FileImage, Image as ImageIcon, X, Hand, BellRing, Check, Shield } from 'lucide-react';
+import { Send, Sparkles, ChevronLeft, MoreVertical, User as UserIcon, MapPin, Lock, CheckCircle, AlertTriangle, Loader2, Key, Upload, FileImage, Image as ImageIcon, X, Hand, BellRing, Check, Shield, Flag } from 'lucide-react';
 import { ChatMessage, ScoredHotel, User, Nudge } from '../types';
 import { generateLobbyIcebreaker, verifyBookingReceipt } from '../services/geminiService';
 import { NotificationItem } from './NotificationToast';
@@ -232,16 +232,6 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     api.chat.getHistory(hotel.id).then(msgs => {
       if (msgs.length > 0) {
         setLobbyMessages(msgs);
-      } else {
-        setLobbyMessages([{
-          id: '1',
-          userId: 'system',
-          userName: 'VibeBot',
-          userAvatar: '',
-          text: `Welcome to the ${interest} Lobby at ${hotel.name}! 🚀`,
-          timestamp: Date.now(),
-          isAi: true
-        }]);
       }
     });
 
@@ -883,6 +873,23 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
               </div>
               <p className="text-sm font-bold text-gray-700">Vibe Secured</p>
               <p className="text-xs text-gray-400 max-w-[200px]">You and {selectedPrivateUser?.name} have accepted each other's nudges.</p>
+            </div>
+          )}
+
+          {activeView === 'lobby' && currentMessages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full pt-10 text-center px-6 animate-in fade-in duration-500">
+              <div className="bg-red-50 p-6 rounded-full mb-4 shadow-sm border border-red-100">
+                <Flag size={48} className="text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Be the Pioneer in {hotel.city || 'Town'}</h3>
+              <p className="text-gray-500 mb-6 max-w-xs leading-relaxed">
+                No one has started a <strong>{interest}</strong> lobby here yet.
+              </p>
+              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm max-w-xs">
+                <p className="text-sm text-gray-600 font-medium">
+                  ✨ Be the first! Text something nice below to launch the lobby and set the vibe for travelers arriving this week.
+                </p>
+              </div>
             </div>
           )}
 
