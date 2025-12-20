@@ -34,22 +34,30 @@ create table public.nudges (
 alter publication supabase_realtime add table public.messages;
 alter publication supabase_realtime add table public.nudges;
 
--- 5. ROW LEVEL SECURITY (RLS) - BASIC
--- For now, allow public read/write to get things moving. 
--- In production, we will lock this down.
+-- 5. ROW LEVEL SECURITY (RLS) - LOCKED DOWN (PRODUCTION)
+-- Public Read (for MVP simplicity), but WRITES are strictly Backend-Only (Service Role).
+
 alter table public.users enable row level security;
+-- READ: Everyone can see basic profiles (needed for picking users in lobby)
 create policy "Public users are viewable by everyone" on public.users for select using (true);
-create policy "Users can insert their own profile" on public.users for insert with check (true);
-create policy "Users can update their own profile" on public.users for update using (true);
+-- WRITE: DENY ALL (Service Role bypasses RLS automatically)
 
 alter table public.messages enable row level security;
+-- READ: Everyone can see messages (in their lobby)
 create policy "Public messages are viewable by everyone" on public.messages for select using (true);
-create policy "Anyone can insert messages" on public.messages for insert with check (true);
+-- WRITE: DENY ALL (Service Role bypasses RLS)
 
 alter table public.nudges enable row level security;
+-- READ: Everyone can see nudges (client filters for "my" nudges)
 create policy "Nudges are viewable by everyone" on public.nudges for select using (true);
-create policy "Anyone can insert nudges" on public.nudges for insert with check (true);
-create policy "Anyone can update nudges" on public.nudges for update using (true);
+-- WRITE: DENY ALL (Service Role bypasses RLS)
+
+alter table public.push_subscriptions enable row level security;
+-- READ: Public? No, actually, only the backend needs to read this to send pushes. 
+-- BUT: For simplicity in this MVP, we might keep it restricted or just deny all access if client never reads it.
+-- Client NEVER reads subscriptions. Only writes.
+-- Since writes are now Backend-Only, we can deny ALL public access to this table.
+-- create policy "No public access" ... (Default behavior is deny)
 
 -- 6. PUSH SUBSCRIPTIONS
 create table public.push_subscriptions (
@@ -63,6 +71,4 @@ create table public.push_subscriptions (
 );
 
 alter table public.push_subscriptions enable row level security;
-create policy "Users can insert their own subscription" on public.push_subscriptions for insert with check (true);
-create policy "Users can delete their own subscription" on public.push_subscriptions for delete using (true);
-create policy "Public subscriptions are viewable by everyone" on public.push_subscriptions for select using (true);
+-- DENY ALL PUBLIC ACCESS (Implicit)

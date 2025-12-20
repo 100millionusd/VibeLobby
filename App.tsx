@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
@@ -8,13 +8,16 @@ import { api } from './services/api';
 import { useAuth } from './contexts/AuthContext';
 // AffiliateDeepLinker removed - we are now an OTA using Duffel
 import SearchCard from './components/SearchCard';
-import LobbyChat from './components/LobbyChat';
-import BookingModal from './components/BookingModal';
 import NotificationToast, { NotificationItem } from './components/NotificationToast';
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
-import LegalModal, { LegalPage } from './components/LegalModal';
-import ProfileModal from './components/ProfileModal';
+import type { LegalPage } from './components/LegalModal';
+
+// Lazy Load Heavy Components
+const LobbyChat = lazy(() => import('./components/LobbyChat'));
+const BookingModal = lazy(() => import('./components/BookingModal'));
+const LegalModal = lazy(() => import('./components/LegalModal'));
+const ProfileModal = lazy(() => import('./components/ProfileModal'));
 
 const App: React.FC = () => {
   // Auth Context
@@ -577,38 +580,45 @@ const App: React.FC = () => {
 
       {/* OVERLAY: BOOKING MODAL */}
       {showBooking && selectedHotel && (
-        <BookingModal
-          hotel={selectedHotel}
-          interest={activeSearchTerm}
-          onClose={() => setShowBooking(false)}
-          onConfirm={handleBookingConfirm}
-        />
+        <Suspense fallback={<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}>
+          <BookingModal
+            hotel={selectedHotel}
+            interest={activeSearchTerm}
+            onClose={() => setShowBooking(false)}
+            onConfirm={handleBookingConfirm}
+          />
+        </Suspense>
       )}
 
       {/* OVERLAY: LOBBY CHAT (Always Mounted for Realtime) */}
       {selectedHotel && user && (
         <div className={showLobby ? 'block' : 'hidden'}>
-          <LobbyChat
-            hotel={selectedHotel}
-            interest={activeSearchTerm}
-            currentUser={user}
-            initialMembers={relevantUsers}
-            onClose={() => setShowLobby(false)}
-            onNotify={setActiveNotification}
-            isOpen={showLobby}
-          />
+          <Suspense fallback={null}>
+            <LobbyChat
+              hotel={selectedHotel}
+              interest={activeSearchTerm}
+              currentUser={user}
+              initialMembers={relevantUsers}
+              onClose={() => setShowLobby(false)}
+              onNotify={setActiveNotification}
+              isOpen={showLobby}
+            />
+          </Suspense>
         </div>
       )}
 
-      {/* OVERLAY: LEGAL MODAL */}
-      {legalPage && (
-        <LegalModal page={legalPage} onClose={() => setLegalPage(null)} />
-      )}
+      {/* OVERLAY: OVERLAYS WRAPPED IN SUSPENSE */}
+      <Suspense fallback={<div className="fixed inset-0 bg-black/20 z-[100]" />}>
+        {/* OVERLAY: LEGAL MODAL */}
+        {legalPage && (
+          <LegalModal page={legalPage} onClose={() => setLegalPage(null)} />
+        )}
 
-      {/* OVERLAY: PROFILE MODAL */}
-      {showProfile && (
-        <ProfileModal onClose={() => setShowProfile(false)} />
-      )}
+        {/* OVERLAY: PROFILE MODAL */}
+        {showProfile && (
+          <ProfileModal onClose={() => setShowProfile(false)} />
+        )}
+      </Suspense>
 
       {/* FLOATING CHAT BUTTON */}
       {user && !showLobby && (
