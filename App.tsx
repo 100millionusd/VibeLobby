@@ -625,7 +625,11 @@ const App: React.FC = () => {
 
       {/* FLOATING CHAT BUTTONS */}
       {user && !showLobby && (() => {
+        // 1. Try to find an active hotel from digital keys
         const activeKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
+
+        console.log('[App] Debug Chat Button. User Keys:', user.digitalKeys);
+        console.log('[App] Active Key:', activeKey);
 
         if (activeKey) {
           // Construct a minimal hotel object from the key to prevent crashes
