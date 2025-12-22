@@ -23,6 +23,7 @@ export interface DigitalKey {
   checkOut: string; // ISO Date String
   bookingReference: string;
   status: 'active' | 'future' | 'expired';
+  city: string; // [NEW] For City Chat
 }
 
 export interface User {
@@ -133,6 +134,7 @@ export interface BookingConfirmationResponse {
     hotel: {
       id: string;
       name: string;
+      city: string; // [NEW]
     };
     room: {
       name: string;

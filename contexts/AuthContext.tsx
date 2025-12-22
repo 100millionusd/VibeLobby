@@ -198,7 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       checkIn: dates.check_in,
       checkOut: dates.check_out,
       bookingReference: booking_reference,
-      status: 'active'
+      status: 'active',
+      city: hotel.city // [NEW]
     };
 
     // Promote guest to verified user so session persists

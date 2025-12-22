@@ -79,6 +79,7 @@ const App: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('Barcelona');
   const [results, setResults] = useState<ScoredHotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<ScoredHotel | null>(null);
+  const [activeChannel, setActiveChannel] = useState<{ id: string; name: string } | null>(null);
 
   // Async State
   const [aiForecast, setAiForecast] = useState<string>('');
@@ -602,6 +603,8 @@ const App: React.FC = () => {
               onClose={() => setShowLobby(false)}
               onNotify={setActiveNotification}
               isOpen={showLobby}
+              channelId={activeChannel?.id}
+              channelName={activeChannel?.name}
             />
           </Suspense>
         </div>
@@ -620,68 +623,109 @@ const App: React.FC = () => {
         )}
       </Suspense>
 
-      {/* FLOATING CHAT BUTTON */}
-      {user && !showLobby && (
-        <button
-          onClick={() => {
-            // 1. Try to find an active hotel from digital keys
-            const activeKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
+      {/* FLOATING CHAT BUTTONS */}
+      {user && !showLobby && (() => {
+        const activeKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
 
-            if (activeKey) {
-              // Construct a minimal hotel object from the key
-              const restoredHotel: ScoredHotel = {
-                id: activeKey.hotelId,
-                name: activeKey.hotelName,
-                city: 'Your Stay',
-                description: '',
-                images: [],
-                pricePerNight: 0,
-                rating: 5,
-                amenities: [],
-                coordinates: { lat: 0, lng: 0 },
-                vibeScore: 100,
-                matchingGuestCount: 0,
-                totalGuestCount: 0,
-                topInterests: []
-              };
-              setSelectedHotel(restoredHotel);
-              setActiveSearchTerm('General'); // Default vibe
-              setShowLobby(true);
-            } else {
-              // No active key? Open a generic "Vibe Lobby" (which will be locked, but private chats work)
-              const genericHotel: ScoredHotel = {
-                id: 'global_lobby',
-                name: 'Vibe Lobby',
-                city: 'Global',
-                description: 'Connect with your vibe tribe.',
-                images: [],
-                pricePerNight: 0,
-                rating: 5,
-                amenities: [],
-                coordinates: { lat: 0, lng: 0 },
-                vibeScore: 0,
-                matchingGuestCount: 0,
-                totalGuestCount: 0,
-                topInterests: []
-              };
-              setSelectedHotel(genericHotel);
-              setActiveSearchTerm('Global');
-              setShowLobby(true);
-            }
-          }}
-          className="fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2 animate-in zoom-in duration-300"
-        >
-          <div className="relative">
-            <MessageCircle size={28} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce">
-                {unreadCount}
-              </span>
-            )}
-          </div>
-          <span className="font-bold pr-1 hidden md:inline">Chats</span>
-        </button>
-      )}
+        if (activeKey) {
+          // Construct a minimal hotel object from the key to prevent crashes
+          const restoredHotel: ScoredHotel = {
+            id: activeKey.hotelId,
+            name: activeKey.hotelName,
+            city: activeKey.city || 'Unknown City',
+            description: '',
+            images: [],
+            pricePerNight: 0,
+            rating: 5,
+            amenities: [],
+            coordinates: { lat: 0, lng: 0 },
+            vibeScore: 100,
+            matchingGuestCount: 0,
+            totalGuestCount: 0,
+            topInterests: []
+          };
+
+          return (
+            <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3 items-end animate-in zoom-in duration-300">
+
+              {/* City Chat Button (Secondary) */}
+              {activeKey.city && (
+                <button
+                  onClick={() => {
+                    setSelectedHotel(restoredHotel);
+                    setActiveSearchTerm('City Vibe');
+                    setActiveChannel({ id: `city:${activeKey.city}`, name: activeKey.city });
+                    setShowLobby(true);
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-xl transition-transform hover:scale-110 flex items-center gap-2"
+                >
+                  <Globe size={24} />
+                  <span className="font-bold pr-2 hidden md:inline">{activeKey.city} Lobby</span>
+                </button>
+              )}
+
+              {/* Hotel Chat Button (Primary) */}
+              <button
+                onClick={() => {
+                  setSelectedHotel(restoredHotel);
+                  setActiveSearchTerm('General');
+                  setActiveChannel({ id: activeKey.hotelId, name: activeKey.hotelName });
+                  setShowLobby(true);
+                }}
+                className="bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2"
+              >
+                <div className="relative">
+                  <MessageCircle size={28} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="font-bold pr-1 hidden md:inline">{activeKey.hotelName}</span>
+              </button>
+            </div>
+          );
+        } else {
+          // No active key? Open a generic "Vibe Lobby"
+          return (
+            <button
+              onClick={() => {
+                const genericHotel: ScoredHotel = {
+                  id: 'global_lobby',
+                  name: 'Vibe Lobby',
+                  city: 'Global',
+                  description: 'Connect with your vibe tribe.',
+                  images: [],
+                  pricePerNight: 0,
+                  rating: 5,
+                  amenities: [],
+                  coordinates: { lat: 0, lng: 0 },
+                  vibeScore: 0,
+                  matchingGuestCount: 0,
+                  totalGuestCount: 0,
+                  topInterests: []
+                };
+                setSelectedHotel(genericHotel);
+                setActiveSearchTerm('Global');
+                setActiveChannel(null); // Use default
+                setShowLobby(true);
+              }}
+              className="fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2 animate-in zoom-in duration-300"
+            >
+              <div className="relative">
+                <MessageCircle size={28} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <span className="font-bold pr-1 hidden md:inline">Chats</span>
+            </button>
+          );
+        }
+      })()}
 
     </div>
   );

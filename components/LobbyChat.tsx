@@ -15,6 +15,8 @@ interface LobbyChatProps {
   onClose: () => void;
   onNotify: (notification: NotificationItem) => void;
   isOpen: boolean;
+  channelId?: string; // [NEW] Allow overriding ID (e.g. "city:Barcelona")
+  channelName?: string; // [NEW] Allow overriding Name
 }
 
 // Haversine formula to calculate distance in km
@@ -51,13 +53,24 @@ const urlBase64ToUint8Array = (base64String: string) => {
   return outputArray;
 };
 
-const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, initialMembers, onClose, onNotify, isOpen }) => {
+const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, initialMembers, onClose, onNotify, isOpen, channelId, channelName }) => {
   const { grantDigitalKey } = useAuth();
 
+  const activeChannelId = channelId || hotel.id;
+  const activeChannelName = channelName || hotel.name;
+  const isCityChat = activeChannelId.startsWith('city:');
+
   // --- VERIFICATION STATE ---
-  const validKey = currentUser.digitalKeys?.find(k =>
-    k.hotelId === hotel.id && k.status === 'active'
-  );
+  const validKey = currentUser.digitalKeys?.find(k => {
+    if (isCityChat) {
+      // Check if user has ANY active key for this city
+      const targetCity = activeChannelId.replace('city:', '');
+      return k.city === targetCity && k.status === 'active';
+    } else {
+      // Standard Hotel Check
+      return k.hotelId === activeChannelId && k.status === 'active';
+    }
+  });
 
   const hasDigitalKey = !!validKey;
 
@@ -139,7 +152,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   // Sync access state when key is granted via AuthContext (e.g. after booking)
   useEffect(() => {
     console.log('[LobbyChat] Access Check:', {
-      hotelId: hotel.id,
+      channelId: activeChannelId,
       userKeys: currentUser.digitalKeys,
       hasDigitalKey,
       isAccessGranted
@@ -149,7 +162,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       console.log('[LobbyChat] Granting Access via Effect');
       setIsAccessGranted(true);
     }
-  }, [hasDigitalKey, hotel.id, currentUser.digitalKeys]);
+  }, [hasDigitalKey, activeChannelId, currentUser.digitalKeys]);
   const [verificationMode, setVerificationMode] = useState<'gps' | 'booking' | null>(null);
 
   // GPS State
@@ -229,7 +242,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
   // 1. INITIAL LOAD & REAL-TIME SUBSCRIPTION
   useEffect(() => {
     // Load history
-    api.chat.getHistory(hotel.id).then(msgs => {
+    api.chat.getHistory(activeChannelId).then(msgs => {
       if (msgs.length > 0) {
         setLobbyMessages(msgs);
       }
@@ -244,12 +257,12 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     setupPush();
 
     // UNIFIED CHANNEL LOGIC
-    const channel = supabase.channel(`lobby:${hotel.id}`);
+    const channel = supabase.channel(`lobby:${activeChannelId}`);
 
     channel
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `hotel_id=eq.${activeChannelId}` },
         (payload) => {
           const m = payload.new as any;
           console.log("Realtime Message Received:", m);
@@ -334,7 +347,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'messages', filter: `hotel_id=eq.${hotel.id}` },
+        { event: 'DELETE', schema: 'public', table: 'messages', filter: `hotel_id=eq.${activeChannelId}` },
         (payload) => {
           const oldRecord = payload.old as any;
           console.log("Realtime Delete Received:", oldRecord.id);
@@ -408,7 +421,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     return () => {
       channel.unsubscribe();
     };
-  }, [hotel.id, interest, hotel.name, currentUser.id]);
+  }, [activeChannelId, interest, activeChannelName, currentUser.id]);
 
   // 2. POLLING FOR NUDGES (Simple simulation for real-time vibe updates)
   useEffect(() => {
@@ -457,8 +470,8 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     if (isAccessGranted && lobbyMessages.length === 1) {
       const loadIcebreaker = async () => {
         setIsLoadingAi(true);
-        const icebreaker = await generateLobbyIcebreaker(interest, hotel.city);
-        const msg = await api.chat.sendMessage(hotel.id, icebreaker, { id: 'system', name: 'Vibe AI', avatar: '', bio: '', digitalKeys: [] });
+        const icebreaker = await generateLobbyIcebreaker(interest, isCityChat ? 'this city' : hotel.city);
+        const msg = await api.chat.sendMessage(activeChannelId, icebreaker, { id: 'system', name: 'Vibe AI', avatar: '', bio: '', digitalKeys: [] });
         setLobbyMessages(prev => {
           if (prev.find(m => m.text === icebreaker)) return prev;
           return [...prev, { ...msg, isAi: true }];
@@ -467,7 +480,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
       };
       loadIcebreaker();
     }
-  }, [hotel, interest, isAccessGranted, lobbyMessages.length]);
+  }, [activeChannelId, interest, isAccessGranted, lobbyMessages.length, isCityChat, hotel.city]);
 
   // 4. SCROLL
   useEffect(() => {
@@ -531,7 +544,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         success: true,
         data: {
           booking_reference: "OCR-" + Math.floor(Math.random() * 10000),
-          hotel: { id: hotel.id, name: hotel.name },
+          hotel: { id: hotel.id, name: hotel.name, city: hotel.city },
           room: { name: "Uploaded Receipt Room" },
           dates: { check_in: new Date().toISOString(), check_out: new Date(Date.now() + 86400000 * 3).toISOString() },
           lobby_access: { granted: true, chat_room_id: `chat_${hotel.id}`, valid_from: new Date().toISOString(), valid_until: new Date(Date.now() + 86400000 * 3).toISOString() }
@@ -693,7 +706,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
     try {
       const recipientId = isPrivate && selectedPrivateUser ? selectedPrivateUser.id : undefined;
-      const sentMsg = await api.chat.sendMessage(hotel.id, msgText, currentUser, isPrivate, msgImage, recipientId);
+      const sentMsg = await api.chat.sendMessage(activeChannelId, msgText, currentUser, isPrivate, msgImage, recipientId);
 
       // Optimistic / Immediate Update (don't wait for Realtime)
       if (isPrivate && recipientId) {
@@ -770,8 +783,8 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
             <div>
               <h2 className="font-bold text-lg leading-tight flex items-center">
-                {activeView === 'lobby' ? (isAccessGranted ? `${hotel.name} Lobby` : 'Lobby Locked') : selectedPrivateUser?.name}
-                {activeView === 'lobby' && isAccessGranted && <span className="ml-2 bg-white/20 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">#{interest}</span>}
+                {activeView === 'lobby' ? (isAccessGranted ? `${activeChannelName} Lobby` : 'Lobby Locked') : selectedPrivateUser?.name}
+                {activeView === 'lobby' && isAccessGranted && !isCityChat && <span className="ml-2 bg-white/20 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">#{interest}</span>}
               </h2>
               <div className="text-brand-100 text-xs flex items-center gap-1.5">
                 {activeView === 'lobby' ? (
