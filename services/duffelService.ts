@@ -137,6 +137,7 @@ export const duffelService = {
         hotel: {
           id: hotel.id,
           name: hotel.name,
+          city: hotel.city,
         },
         room: {
           name: "Confirmed Room",
