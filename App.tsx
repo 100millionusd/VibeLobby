@@ -625,55 +625,68 @@ const App: React.FC = () => {
 
       {/* FLOATING CHAT BUTTONS */}
       {user && !showLobby && (() => {
-        // 1. Try to find an active hotel from digital keys
-        const activeKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
+        // 1. Find Primary Key (for Hotel Chat) - Default to the first active one
+        const primaryKey = user.digitalKeys.find(k => k.status === 'active') || user.digitalKeys[0];
 
-        console.log('[App] Debug Chat Button. User Keys:', user.digitalKeys);
-        console.log('[App] Active Key:', activeKey);
+        // 2. Find City Key (for City Chat) - Specifically look for one with a city
+        const cityKey = user.digitalKeys.find(k => k.status === 'active' && k.city) || (primaryKey?.city ? primaryKey : undefined);
 
-        if (activeKey) {
-          // Construct a minimal hotel object from the key to prevent crashes
-          const restoredHotel: ScoredHotel = {
-            id: activeKey.hotelId,
-            name: activeKey.hotelName,
-            city: activeKey.city || 'Unknown City',
-            description: '',
-            images: [],
-            pricePerNight: 0,
-            rating: 5,
-            amenities: [],
-            coordinates: { lat: 0, lng: 0 },
-            vibeScore: 100,
-            matchingGuestCount: 0,
-            totalGuestCount: 0,
-            topInterests: []
-          };
-
+        if (primaryKey) {
           return (
             <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3 items-end animate-in zoom-in duration-300">
 
               {/* City Chat Button (Secondary) */}
-              {activeKey.city && (
+              {cityKey && cityKey.city && (
                 <button
                   onClick={() => {
-                    setSelectedHotel(restoredHotel);
+                    const hotelObj: ScoredHotel = {
+                      id: cityKey.hotelId,
+                      name: cityKey.hotelName,
+                      city: cityKey.city,
+                      description: '',
+                      images: [],
+                      pricePerNight: 0,
+                      rating: 5,
+                      amenities: [],
+                      coordinates: { lat: 0, lng: 0 },
+                      vibeScore: 100,
+                      matchingGuestCount: 0,
+                      totalGuestCount: 0,
+                      topInterests: []
+                    };
+                    setSelectedHotel(hotelObj);
                     setActiveSearchTerm('City Vibe');
-                    setActiveChannel({ id: `city:${activeKey.city}`, name: activeKey.city });
+                    setActiveChannel({ id: `city:${cityKey.city}`, name: cityKey.city });
                     setShowLobby(true);
                   }}
                   className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-xl transition-transform hover:scale-110 flex items-center gap-2"
                 >
                   <Globe size={24} />
-                  <span className="font-bold pr-2 hidden md:inline">{activeKey.city} Lobby</span>
+                  <span className="font-bold pr-2 hidden md:inline">{cityKey.city} Lobby</span>
                 </button>
               )}
 
               {/* Hotel Chat Button (Primary) */}
               <button
                 onClick={() => {
-                  setSelectedHotel(restoredHotel);
+                  const hotelObj: ScoredHotel = {
+                    id: primaryKey.hotelId,
+                    name: primaryKey.hotelName,
+                    city: primaryKey.city || 'Unknown',
+                    description: '',
+                    images: [],
+                    pricePerNight: 0,
+                    rating: 5,
+                    amenities: [],
+                    coordinates: { lat: 0, lng: 0 },
+                    vibeScore: 100,
+                    matchingGuestCount: 0,
+                    totalGuestCount: 0,
+                    topInterests: []
+                  };
+                  setSelectedHotel(hotelObj);
                   setActiveSearchTerm('General');
-                  setActiveChannel({ id: activeKey.hotelId, name: activeKey.hotelName });
+                  setActiveChannel({ id: primaryKey.hotelId, name: primaryKey.hotelName });
                   setShowLobby(true);
                 }}
                 className="bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2"
@@ -686,7 +699,7 @@ const App: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <span className="font-bold pr-1 hidden md:inline">{activeKey.hotelName}</span>
+                <span className="font-bold pr-1 hidden md:inline">{primaryKey.hotelName}</span>
               </button>
             </div>
           );
