@@ -49,42 +49,34 @@ export const duffelService = {
         throw new Error("No availability found for these dates.");
       }
 
-      // 2. Get rates for the first result (Best Match)
-      // In a full app, we would let the user choose the hotel from the list.
-      // Here we map the "real hotel" we just found near the coordinates.
-      const realHotelId = results[0].id;
+      // 2. Find the first result that has rooms/rates available
+      const bestResult = results.find((r: any) => r.rooms && r.rooms.length > 0);
 
-      const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
-      const payload = await ratesRes.json();
-
-      console.log("DEBUG RATES PAYLOAD KEYS:", Object.keys(payload));
-
-      // Duffel Stays API: "rooms" contains a list of rooms, each with "rates"
-      const roomsList = payload.rooms || [];
-
-      if (!Array.isArray(roomsList) || roomsList.length === 0) {
-        console.error("Duffel Rates API returned no rooms:", payload);
-        throw new Error("Unable to fetch rates for this hotel.");
+      if (!bestResult) {
+        console.warn("Duffel API returned results but none with open rooms.");
+        throw new Error("No rooms available for these dates.");
       }
 
-      // Flatten rates from all rooms
-      // Type: Rate & { roomName: string }
-      const allRates = roomsList.flatMap((room: any) => {
+      const realHotelId = bestResult.id;
+      const hotelName = bestResult.accommodation?.name || bestResult.name || 'Unknown Hotel';
+
+      // 3. Map Duffel Rooms/Rates to our RoomOffer type
+      // Flatten rates from all rooms in the best result
+      const allRates = bestResult.rooms.flatMap((room: any) => {
         return (room.rates || []).map((rate: any) => ({
           ...rate,
-          _roomName: room.name // Preserve room name for display
+          _roomName: room.name // Preserve room name
         }));
       });
 
       if (allRates.length === 0) {
-        throw new Error("No rates available for these rooms.");
+        throw new Error("No rates found in the best matching hotel.");
       }
 
-      // 3. Map Duffel Rates to our RoomOffer type
       return allRates.map((rate: any) => ({
         id: rate.id, // This is the Rate ID needed for quoting
         name: rate._roomName || 'Standard Room',
-        description: `Real stay at ${results[0].accommodation?.name || results[0].name || 'this hotel'}`,
+        description: `Real stay at ${hotelName}`,
         price: parseFloat(rate.total_amount),
         currency: rate.total_currency,
         cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',
