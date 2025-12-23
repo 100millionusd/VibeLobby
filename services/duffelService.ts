@@ -49,28 +49,35 @@ export const duffelService = {
         throw new Error("No availability found for these dates.");
       }
 
-      // 2. Find the first result that has rooms/rates available
-      const bestResult = results.find((r: any) => r.rooms && r.rooms.length > 0);
+      // 2. Get rates for the first result
+      // We assume the first result is the best match for the location/search
+      const firstResult = results[0];
+      const realHotelId = firstResult.id;
+      const hotelName = firstResult.accommodation?.name || firstResult.name || 'Unknown Hotel';
 
-      if (!bestResult) {
-        console.warn("Duffel API returned results but none with open rooms.");
-        throw new Error("No rooms available for these dates.");
+      console.log(`Fetching rates for hotel: ${hotelName} (${realHotelId})`);
+
+      const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
+      const payload = await ratesRes.json();
+
+      // Duffel Stays API: "rooms" is the key containing the rates list
+      const roomsList = payload.rooms || [];
+
+      if (!Array.isArray(roomsList) || roomsList.length === 0) {
+        console.warn("Duffel Rates API returned no rooms:", payload);
+        throw new Error("No rooms available for this hotel.");
       }
 
-      const realHotelId = bestResult.id;
-      const hotelName = bestResult.accommodation?.name || bestResult.name || 'Unknown Hotel';
-
-      // 3. Map Duffel Rooms/Rates to our RoomOffer type
-      // Flatten rates from all rooms in the best result
-      const allRates = bestResult.rooms.flatMap((room: any) => {
+      // Flatten rates from all rooms
+      const allRates = roomsList.flatMap((room: any) => {
         return (room.rates || []).map((rate: any) => ({
           ...rate,
-          _roomName: room.name // Preserve room name
+          _roomName: room.name // Preserve room name for display
         }));
       });
 
       if (allRates.length === 0) {
-        throw new Error("No rates found in the best matching hotel.");
+        throw new Error("No specific rates found (check request parameters).");
       }
 
       return allRates.map((rate: any) => ({
