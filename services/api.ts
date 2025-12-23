@@ -109,7 +109,11 @@ export const api = {
     ): Promise<ScoredHotel[]> => {
       console.log(`Searching Real Duffel Inventory for: ${city}`);
 
-      const realHotels = await duffelService.searchHotels(city, checkIn, checkOut, rooms, guests);
+      // Ensure dates are Date objects
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+
+      const realHotels = await duffelService.searchHotels(city, checkInDate, checkOutDate, rooms, guests);
 
       if (realHotels.length > 0) {
         // Sort by our synthetic vibe score

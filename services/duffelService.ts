@@ -33,8 +33,9 @@ export const duffelService = {
               longitude: hotel.coordinates.lng
             }
           },
-          checkInDate: checkIn.toISOString().split('T')[0],
-          checkOutDate: checkOut.toISOString().split('T')[0],
+
+          checkInDate: new Date(checkIn).toISOString().split('T')[0],
+          checkOutDate: new Date(checkOut).toISOString().split('T')[0],
           guests: Array(guests).fill({ type: 'adult' })
         })
       });
