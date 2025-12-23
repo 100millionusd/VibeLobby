@@ -41,7 +41,11 @@ export const duffelService = {
       });
 
       const searchData = await searchRes.json();
-      if (!searchData.results || searchData.results.length === 0) {
+
+      // Handle Duffel Response (could be array or wrapped in results)
+      const results = Array.isArray(searchData) ? searchData : (searchData.results || []);
+
+      if (results.length === 0) {
         console.warn("Duffel API returned no results. Using mock data.");
         return duffelService.getMockOffers(hotel);
       }
@@ -49,7 +53,7 @@ export const duffelService = {
       // 2. Get rates for the first result (Best Match)
       // In a full app, we would let the user choose the hotel from the list.
       // Here we map the "Mock Hotel" to the "First Real Hotel Found".
-      const realHotelId = searchData.results[0].id;
+      const realHotelId = results[0].id;
 
       const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
       const ratesData = await ratesRes.json();
@@ -114,7 +118,7 @@ export const duffelService = {
         guests: [{
           given_name: guest.firstName,
           family_name: guest.lastName,
-          born_on: '1990-01-01', // Placeholder, should ask user
+          born_on: guest.bornOn,
           email: guest.email
         }],
         email: guest.email,

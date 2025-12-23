@@ -186,9 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data } = confirmation;
     const { lobby_access, hotel, dates, booking_reference } = data;
 
-    console.log('[AuthContext] Granting Key. Raw Data:', data);
-    console.log('[AuthContext] Hotel Object:', hotel);
-
     if (!lobby_access.granted) return;
 
     const existingKeyIndex = user.digitalKeys.findIndex(k => k.hotelId === hotel.id && k.bookingReference === booking_reference);
@@ -204,8 +201,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active',
       city: hotel.city // [NEW]
     };
-
-    console.log('[AuthContext] New Key Created:', newKey);
 
     // Promote guest to verified user so session persists
     const updatedUser = {

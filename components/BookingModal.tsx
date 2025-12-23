@@ -25,7 +25,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Form State
-  const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '' });
+  const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '', bornOn: '' });
   const [bookingRef, setBookingRef] = useState('');
 
   // Duffel Component State
@@ -298,6 +298,16 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                     onChange={e => setGuestDetails({ ...guestDetails, email: e.target.value })}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                     placeholder="alice@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
+                  <input
+                    required
+                    type="date"
+                    value={guestDetails.bornOn}
+                    onChange={e => setGuestDetails({ ...guestDetails, bornOn: e.target.value })}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                   />
                 </div>
               </div>
