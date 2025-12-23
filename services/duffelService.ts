@@ -157,5 +157,91 @@ export const duffelService = {
         }
       }
     };
+  },
+  /**
+   * 3. Search Hotels (Global Search)
+   */
+  searchHotels: async (
+    city: string,
+    checkIn: Date,
+    checkOut: Date,
+    rooms: number = 1,
+    guests: number = 1
+  ): Promise<ScoredHotel[]> => {
+
+    // 1. Geocode City (Simple Mock for now)
+    const cities: Record<string, { lat: number; lng: number }> = {
+      'Barcelona': { lat: 41.3851, lng: 2.1734 },
+      'London': { lat: 51.5074, lng: -0.1278 },
+      'Paris': { lat: 48.8566, lng: 2.3522 },
+      'Berlin': { lat: 52.5200, lng: 13.4050 },
+      'New York': { lat: 40.7128, lng: -74.0060 },
+      'Bali': { lat: -8.4095, lng: 115.1889 },
+      'Tokyo': { lat: 35.6762, lng: 139.6503 }
+    };
+
+    const coords = cities[city] || cities['Barcelona']; // Default to BCN
+
+    try {
+      const searchRes = await fetch('/api/hotels/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: {
+            radius: 10,
+            geographic_coordinates: {
+              latitude: coords.lat,
+              longitude: coords.lng
+            }
+          },
+          checkInDate: checkIn.toISOString().split('T')[0],
+          checkOutDate: checkOut.toISOString().split('T')[0],
+          rooms: rooms,
+          guests: Array(guests).fill({ type: 'adult' })
+        })
+      });
+
+      const searchData = await searchRes.json();
+      const results = Array.isArray(searchData) ? searchData : (searchData.results || []);
+
+      if (results.length === 0) {
+        return [];
+      }
+
+      // Map to Scored Hotel (Enrich with fake Vibe Data)
+      return results.map((offer: any) => duffelService.mapDuffelToScoredHotel(offer, city));
+
+    } catch (e) {
+      console.error("Duffel Real Search Failed", e);
+      return [];
+    }
+  },
+
+  mapDuffelToScoredHotel: (offer: any, city: string): ScoredHotel => {
+    // Synthetic Vibe Generation
+    const vibeScore = 60 + Math.floor(Math.random() * 35); // 60-95
+    const guestCount = 5 + Math.floor(Math.random() * 20); // 5-25 guests
+
+    return {
+      id: offer.accommodation.id || offer.id,
+      name: offer.accommodation.name || offer.name || 'Unknown Hotel',
+      city: city,
+      description: `Stay at ${offer.accommodation.name}. Great location for meeting fellow travelers.`,
+      images: offer.accommodation.photos?.map((p: any) => p.url) || ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000'],
+      pricePerNight: parseFloat(offer.total_amount || offer.total_currency_amount || '150'),
+      rating: offer.accommodation.rating || 4.5,
+      amenities: offer.accommodation.amenities?.slice(0, 5).map((a: any) => a.description || a.key) || ['WiFi', 'Bar', 'Lounge'],
+      coordinates: {
+        lat: offer.accommodation.location?.geographic_coordinates?.latitude || 0,
+        lng: offer.accommodation.location?.geographic_coordinates?.longitude || 0
+      },
+      vibeScore: vibeScore,
+      matchingGuestCount: Math.floor(guestCount * 0.6), // 60% match
+      totalGuestCount: guestCount,
+      topInterests: [
+        { label: 'Techno', count: Math.floor(guestCount * 0.4) },
+        { label: 'Startup', count: Math.floor(guestCount * 0.2) }
+      ]
+    };
   }
 };
