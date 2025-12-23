@@ -36,7 +36,7 @@ export const duffelService = {
           // Ensure inputs are valid Date dates before converting
           checkInDate: new Date(checkIn).toISOString().split('T')[0],
           checkOutDate: new Date(checkOut).toISOString().split('T')[0],
-          guests: [{ type: 'adult' }] // DEBUG: Force 1 guest to match working script
+          guests: Array(guests).fill({ type: 'adult' })
         })
       });
 

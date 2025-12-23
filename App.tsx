@@ -81,7 +81,7 @@ const App: React.FC = () => {
   // Search Parameters
   const [checkIn, setCheckIn] = useState<string>(new Date().toISOString().split('T')[0]);
   const [checkOut, setCheckOut] = useState<string>(new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]); // Default +3 days
-  const [guestCount, setGuestCount] = useState<number>(2);
+  const [guestCount, setGuestCount] = useState<number>(1);
   const [roomCount, setRoomCount] = useState<number>(1);
 
   const [results, setResults] = useState<ScoredHotel[]>([]);

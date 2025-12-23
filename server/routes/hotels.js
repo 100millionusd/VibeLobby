@@ -112,7 +112,10 @@ router.post('/book', async (req, res) => {
 
         res.json(booking.data);
     } catch (error) {
-        console.error('Duffel Booking Error:', error);
+        console.error('Duffel Booking Error (Full):', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        if (error.errors) {
+            console.error('Duffel API Errors:', JSON.stringify(error.errors, null, 2));
+        }
         res.status(500).json({ error: error.message });
     }
 });
