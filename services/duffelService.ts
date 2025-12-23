@@ -182,7 +182,10 @@ export const duffelService = {
       body: JSON.stringify({ amount, currency })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Payment Intent failed");
+    if (!res.ok) {
+      console.error("Payment Intent Error Body:", data);
+      throw new Error(data.error || JSON.stringify(data) || "Payment Intent failed");
+    }
     return data.client_token;
   },
 

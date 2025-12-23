@@ -107,11 +107,7 @@ router.post('/payment-intent', async (req, res) => {
         console.log(`[Backend] Creating Payment Intent: ${amount} ${currency}`);
         const intent = await duffel.paymentIntents.create({
             amount: amount,
-            currency: currency,
-            payment: {
-                // For a real app, this should be 'card' to trigger the component flow
-                // But we need to ensure the library supports it
-            }
+            currency: currency
         });
         // Note: Duffel Node SDK paymentIntents.create parameters might strictly require 'amount' and 'currency'
         // The default flow creates an intent that the frontend confirms.
