@@ -70,12 +70,7 @@ router.post('/book', async (req, res) => {
     try {
         const { quoteId, guests, email, phoneNumber, paymentToken } = req.body;
 
-        const bookingPayload = {
-            quote_id: quoteId,
-            guests: guests, // [{ given_name, family_name, born_on, ... }]
-            email: email,
-            phone_number: phoneNumber
-        };
+
 
         // 3. Confirm Booking using Duffel Balance
         // (Assuming Payment Intent has successfully topped up the balance)
