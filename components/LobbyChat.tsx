@@ -917,7 +917,10 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             <div key={msg.id} className={`flex ${msg.userId === currentUser.id ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
               {msg.userId !== currentUser.id && !msg.isAi && activeView === 'lobby' && (
                 <img
-                  src={msg.userAvatar}
+                  src={msg.userName === 'Vibe AI'
+                    ? (isCityChat ? '/avatars/city_guide.png' : '/avatars/hotel_concierge.png')
+                    : msg.userAvatar
+                  }
                   alt={msg.userName}
                   onError={(e) => { (e.target as HTMLImageElement).src = 'https://i.pravatar.cc/150?u=fallback'; }}
                   onClick={() => {
