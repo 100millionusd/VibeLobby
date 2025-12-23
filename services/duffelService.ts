@@ -64,9 +64,10 @@ export const duffelService = {
 
           let roomsList: any[] = [];
 
+          // Debug Logging: Print the hotel we are checking
+          console.log(`Checking rates for: ${hotelName} (${realHotelId})`);
+
           // Strategy A: Check if Search Result already has rooms (inside accommodation)
-          // Duffel docs say "Each accommodation is returned with information on the cheapest available rate."
-          // But sometimes full room list is there.
           if (Array.isArray(result.accommodation?.rooms) && result.accommodation.rooms.length > 0) {
             console.log(`[Duffel] Found rooms in initial search for ${hotelName}`);
             roomsList = result.accommodation.rooms;
@@ -74,6 +75,14 @@ export const duffelService = {
             // Strategy B: Fetch Rates Endpoint
             const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
             const payload = await ratesRes.json();
+
+            // --- DEBUG BLOCK STARTS ---
+            if (results.indexOf(result) === 0) {
+              // Log the FULL payload for the first result to debug structure
+              console.log(`[Duffel] Payload Keys for ${hotelName}:`, Object.keys(payload));
+              console.log(`[Duffel] Full Payload Dump:`, JSON.stringify(payload));
+            }
+            // --- DEBUG BLOCK ENDS ---
 
             // Universal Room Extraction: Check all possible locations per Docs & Observations
             roomsList = payload.rooms
