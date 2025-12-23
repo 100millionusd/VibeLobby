@@ -152,7 +152,8 @@ router.post('/subscribe', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error("Subscription Error:", err);
-        res.status(500).json({ error: err.message });
+        // Return 200 OK even on error to stop frontend retries/noise, but log it
+        res.status(200).json({ success: false, error: err.message });
     }
 });
 
