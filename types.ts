@@ -125,7 +125,6 @@ export interface GuestDetails {
   firstName: string;
   lastName: string;
   email: string;
-  bornOn: string; // YYYY-MM-DD
 }
 
 export interface BookingConfirmationResponse {

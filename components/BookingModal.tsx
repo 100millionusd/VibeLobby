@@ -8,13 +8,19 @@ import { getEnv } from '../utils/env';
 interface BookingModalProps {
   hotel: ScoredHotel;
   interest: string;
+  searchParams: {
+    checkIn: Date;
+    checkOut: Date;
+    guests: number;
+    rooms: number;
+  };
   onClose: () => void;
   onConfirm: () => void;
 }
 
 type BookingStep = 'search' | 'selection' | 'details' | 'payment' | 'confirmed';
 
-const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, onConfirm }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchParams, onClose, onConfirm }) => {
   const { grantDigitalKey } = useAuth();
   const [step, setStep] = useState<BookingStep>('search');
 
@@ -25,7 +31,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Form State
-  const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '', bornOn: '' });
+  const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '' });
   const [bookingRef, setBookingRef] = useState('');
 
   // Duffel Component State
@@ -36,12 +42,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
   useEffect(() => {
     const fetchOffers = async () => {
       setIsLoading(true);
-      const checkIn = new Date();
-      const checkOut = new Date();
-      checkOut.setDate(checkOut.getDate() + 3);
-
       try {
-        const rooms = await duffelService.searchAccommodations(hotel, checkIn, checkOut);
+        const rooms = await duffelService.searchAccommodations(
+          hotel,
+          searchParams.checkIn,
+          searchParams.checkOut,
+          searchParams.rooms,
+          searchParams.guests
+        );
         setOffers(rooms);
         setStep('selection');
       } catch (e) {
@@ -126,10 +134,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
     setIsLoading(true);
     setErrorMsg(null);
 
-    // Mock Dates
-    const checkIn = new Date();
-    const checkOut = new Date();
-    checkOut.setDate(checkOut.getDate() + 3);
+    // Real Dates from Search
+    const checkIn = searchParams.checkIn;
+    const checkOut = searchParams.checkOut;
 
     try {
       let paymentToken = "tok_visa_simulation";
@@ -298,16 +305,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, onClose, o
                     onChange={e => setGuestDetails({ ...guestDetails, email: e.target.value })}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                     placeholder="alice@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Date of Birth</label>
-                  <input
-                    required
-                    type="date"
-                    value={guestDetails.bornOn}
-                    onChange={e => setGuestDetails({ ...guestDetails, bornOn: e.target.value })}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                   />
                 </div>
               </div>

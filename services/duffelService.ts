@@ -19,7 +19,7 @@ export const duffelService = {
    * 1. Search for available rooms (Offers)
    * Real Implementation: Calls our Backend -> Duffel API
    */
-  searchAccommodations: async (hotel: ScoredHotel, checkIn: Date, checkOut: Date): Promise<RoomOffer[]> => {
+  searchAccommodations: async (hotel: ScoredHotel, checkIn: Date, checkOut: Date, rooms: number = 1, guests: number = 1): Promise<RoomOffer[]> => {
     try {
       // 1. Search for accommodations near the hotel's location
       const searchRes = await fetch('/api/hotels/search', {
@@ -35,8 +35,7 @@ export const duffelService = {
           },
           checkInDate: checkIn.toISOString().split('T')[0],
           checkOutDate: checkOut.toISOString().split('T')[0],
-          rooms: 1,
-          guests: [{ type: 'adult' }]
+          guests: Array(guests).fill({ type: 'adult' })
         })
       });
 
@@ -118,7 +117,7 @@ export const duffelService = {
         guests: [{
           given_name: guest.firstName,
           family_name: guest.lastName,
-          born_on: guest.bornOn,
+          born_on: '1990-01-01', // Placeholder as UI does not collect this
           email: guest.email
         }],
         email: guest.email,

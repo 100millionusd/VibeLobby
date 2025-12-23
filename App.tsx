@@ -77,6 +77,13 @@ const App: React.FC = () => {
   const [aiReasoning, setAiReasoning] = useState<string>('');
 
   const [selectedCity, setSelectedCity] = useState<string>('Barcelona');
+
+  // Search Parameters
+  const [checkIn, setCheckIn] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [checkOut, setCheckOut] = useState<string>(new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0]); // Default +3 days
+  const [guestCount, setGuestCount] = useState<number>(2);
+  const [roomCount, setRoomCount] = useState<number>(1);
+
   const [results, setResults] = useState<ScoredHotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<ScoredHotel | null>(null);
   const [activeChannel, setActiveChannel] = useState<{ id: string; name: string } | null>(null);
@@ -348,6 +355,57 @@ const App: React.FC = () => {
                 </div>
               </div>
 
+              {/* Date & Guest Inputs */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Check-in</label>
+                  <input
+                    type="date"
+                    value={checkIn}
+                    onChange={(e) => setCheckIn(e.target.value)}
+                    className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 text-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Check-out</label>
+                  <input
+                    type="date"
+                    value={checkOut}
+                    onChange={(e) => setCheckOut(e.target.value)}
+                    className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={guestCount}
+                      onChange={(e) => setGuestCount(parseInt(e.target.value) || 1)}
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 text-gray-700"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Rooms</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={roomCount}
+                      onChange={(e) => setRoomCount(parseInt(e.target.value) || 1)}
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 text-gray-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={handleSearch}
                 disabled={(!selectedInterest && !customInterest) || isAnalyzing}
@@ -585,6 +643,12 @@ const App: React.FC = () => {
           <BookingModal
             hotel={selectedHotel}
             interest={activeSearchTerm}
+            searchParams={{
+              checkIn: new Date(checkIn),
+              checkOut: new Date(checkOut),
+              guests: guestCount,
+              rooms: roomCount
+            }}
             onClose={() => setShowBooking(false)}
             onConfirm={handleBookingConfirm}
           />
