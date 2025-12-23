@@ -176,8 +176,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">My Bookings</label>
                             {user.digitalKeys && user.digitalKeys.length > 0 ? (
-                                {
-                                    user.digitalKeys.map((key, idx) => (
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                    {user.digitalKeys.map((key, idx) => (
                                         <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center text-sm">
                                             <div>
                                                 <div className="font-bold text-gray-800">{key.hotelName}</div>
@@ -212,43 +212,42 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                                 )}
 
                                                 <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                        key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                            'bg-gray-200 text-gray-500'
+                                                    key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                        'bg-gray-200 text-gray-500'
                                                     }`}>
                                                     {key.status === 'active' ? 'Active' : key.status.charAt(0).toUpperCase() + key.status.slice(1)}
                                                 </div>
                                             </div>
                                         </div>
-                                    ))
-                                }
+                                    ))}
                                 </div>
-                        ) : (
-                        <div className="text-sm text-gray-400 italic bg-gray-50 p-4 rounded-xl text-center border border-dashed border-gray-200">
-                            No active bookings found.
-                        </div>
+                            ) : (
+                                <div className="text-sm text-gray-400 italic bg-gray-50 p-4 rounded-xl text-center border border-dashed border-gray-200">
+                                    No active bookings found.
+                                </div>
                             )}
+                        </div>
+                    </div>
+
+                    <div className="mt-8 flex gap-3">
+                        <button
+                            onClick={handleLogout}
+                            className="flex-1 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <LogOut size={18} /> Sign Out
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving || !name.trim()}
+                            className="flex-[2] bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            Save Changes
+                        </button>
                     </div>
                 </div>
 
-                <div className="mt-8 flex gap-3">
-                    <button
-                        onClick={handleLogout}
-                        className="flex-1 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <LogOut size={18} /> Sign Out
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving || !name.trim()}
-                        className="flex-[2] bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                        Save Changes
-                    </button>
-                </div>
             </div>
-
-        </div>
         </div >
     );
 };
