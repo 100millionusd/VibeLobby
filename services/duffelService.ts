@@ -96,29 +96,7 @@ export const duffelService = {
 
             roomsList = candidates.find(c => Array.isArray(c)) || [];
 
-            // Strategy C: Fallback for Price-Only Responses
-            // If Duffel gives us a price but no room list, we use the price to make a valid offer.
-            if (roomsList.length === 0 && payload.cheapest_rate_total_amount) {
-              console.warn(`[Duffel] Hotel ${hotelName} has price ${payload.cheapest_rate_total_amount} but no room details. Using Generic Room fallback.`);
 
-              // Create a verified "Standard Room" using the REAL price and currency from Duffel
-              const genericRate = {
-                id: payload.id || `rate_generic_${realHotelId}`,
-                _roomName: "Standard Room (Best Rate)",
-                total_amount: payload.cheapest_rate_total_amount,
-                total_currency: payload.cheapest_rate_currency,
-                conditions: { cancellation_refund: 'refundable' }
-              };
-
-              // Wrap it in a structure that our mapper below understands
-              roomsList = [{
-                name: "Standard Room",
-                rates: [genericRate]
-              }];
-            }
-          }
-
-          if (Array.isArray(roomsList) && roomsList.length > 0) {
             console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
 
             const allRates = roomsList.flatMap((room: any) => {

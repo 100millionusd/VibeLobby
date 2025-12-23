@@ -61,7 +61,10 @@ router.post('/quote', async (req, res) => {
         res.json(quote.data);
     } catch (error) {
         console.error('Duffel Quote Error:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({
+            error: error.message,
+            details: error.errors || error.meta
+        });
     }
 });
 
