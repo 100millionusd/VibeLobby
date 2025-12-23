@@ -95,7 +95,7 @@ router.post('/book', async (req, res) => {
             console.log("[Backend] Card Created:", cardId);
         } catch (cardError) {
             console.error("Card Creation Failed:", JSON.stringify(cardError, null, 2));
-            throw new Error("Failed to secure payment card. Please try again.");
+            throw cardError; // Propagate actual Duffel error
         }
 
         // 3. Create Booking with Card ID
