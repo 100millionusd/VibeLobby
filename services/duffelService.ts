@@ -207,8 +207,13 @@ export const duffelService = {
 
     const booking = await bookingRes.json();
 
+    if (!bookingRes.ok) {
+      console.error("Booking Failed Backend Response:", booking);
+      throw new Error(booking.error || (booking.details ? JSON.stringify(booking.details) : "Booking failed at backend"));
+    }
+
     if (!booking.id) {
-      throw new Error("Booking failed");
+      throw new Error("Booking response missing ID");
     }
 
     // Map to Confirmation
