@@ -185,11 +185,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                             </div>
                                             <div className="flex items-center gap-2">
 
-                                                {key.status === 'active' && (
+                                                {key.status === 'active' && key.bookingId && (
                                                     <button
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            if (!key.bookingId) return alert("Cannot cancel legacy booking (missing ID)");
                                                             if (confirm('Are you sure you want to CANCEL this booking? This checks you out immediately.')) {
                                                                 try {
                                                                     await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
@@ -205,9 +204,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                                                 }
                                                             }
                                                         }}
-                                                        className="px-2 py-1 bg-white text-red-500 border border-red-200 rounded text-xs hover:bg-red-50"
+                                                        className="px-2 py-1 bg-white text-red-600 border border-red-200 rounded text-xs hover:bg-red-50 font-medium transition-colors"
                                                     >
-                                                        Cancel
+                                                        Cancel Booking
                                                     </button>
                                                 )}
 
