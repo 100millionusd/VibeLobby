@@ -307,7 +307,7 @@ export const duffelService = {
       city: city,
       description: `Stay at ${offer.accommodation.name}. Great location for meeting fellow travelers.`,
       images: offer.accommodation.photos?.map((p: any) => p.url) || ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000'],
-      pricePerNight: parseFloat(offer.total_amount || offer.total_currency_amount || '150'),
+      pricePerNight: parseFloat(offer.cheapest_rate_total_amount || offer.total_amount || offer.total_currency_amount || '150'),
       rating: offer.accommodation.rating || 4.5,
       amenities: offer.accommodation.amenities?.slice(0, 5).map((a: any) => a.description || a.key) || ['WiFi', 'Bar', 'Lounge'],
       coordinates: {

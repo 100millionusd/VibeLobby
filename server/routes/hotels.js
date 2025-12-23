@@ -116,7 +116,11 @@ router.post('/book', async (req, res) => {
         if (error.errors) {
             console.error('Duffel API Errors:', JSON.stringify(error.errors, null, 2));
         }
-        res.status(500).json({ error: error.message });
+        // Send detailed error to client for debugging
+        res.status(500).json({
+            error: error.message,
+            details: error.errors || error.meta || 'No additional details'
+        });
     }
 });
 
