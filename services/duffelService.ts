@@ -188,7 +188,7 @@ export const duffelService = {
           email: guest.email
         }],
         email: guest.email,
-        phoneNumber: '+16505550100', // Valid E.164 format for testing
+        phoneNumber: guest.phoneNumber || '+16505550100', // Use user input, fallback to test number if empty
         paymentToken: paymentToken
       })
     });

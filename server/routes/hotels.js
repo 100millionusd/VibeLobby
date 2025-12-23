@@ -77,11 +77,33 @@ router.post('/book', async (req, res) => {
             phone_number: phoneNumber
         };
 
-        // Use Duffel Balance for instant 3DS-free payment in Test Mode
-        // This simulates the Agency paying Duffel.
+        // 1. Validate Payment Token
+        if (!paymentToken) {
+            return res.status(400).json({ error: "Payment token is required for production booking." });
+        }
+
+        // 2. Create a Lodged Card from the Token
+        // This is the required step to get a 'card_id' for the booking payload.
+        console.log("[Backend] Creating Card from Token...");
+        let cardId;
+        try {
+            const card = await duffel.cards.create({
+                token: paymentToken,
+                multi_use: true // Required for Lodged Cards as per instructions
+            });
+            cardId = card.data.id;
+            console.log("[Backend] Card Created:", cardId);
+        } catch (cardError) {
+            console.error("Card Creation Failed:", JSON.stringify(cardError, null, 2));
+            throw new Error("Failed to secure payment card. Please try again.");
+        }
+
+        // 3. Create Booking with Card ID
         bookingPayload.payment = {
-            type: "balance"
+            card_id: cardId
         };
+
+        console.log("[Backend] Submitting Booking with Payload:", JSON.stringify(bookingPayload, null, 2));
 
         const booking = await duffel.stays.bookings.create(bookingPayload);
 
