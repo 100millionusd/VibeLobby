@@ -22,7 +22,8 @@ export interface DigitalKey {
   checkIn: string; // ISO Date String
   checkOut: string; // ISO Date String
   bookingReference: string;
-  status: 'active' | 'future' | 'expired';
+  bookingId?: string; // [NEW] Duffel Booking ID (bok_...) for cancellation
+  status: 'active' | 'future' | 'expired' | 'cancelled'; // [NEW] Added cancelled status
   city: string; // [NEW] For City Chat
 }
 
@@ -132,6 +133,7 @@ export interface BookingConfirmationResponse {
   success: boolean;
   data: {
     booking_reference: string;
+    booking_id: string; // [NEW] Duffel ID
     hotel: {
       id: string;
       name: string;

@@ -122,4 +122,26 @@ router.post('/payment-intent', async (req, res) => {
     }
 });
 
+// 6. Cancel Booking
+router.post('/bookings/:id/cancel', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`[Backend] Cancelling booking: ${id}`);
+
+        // 1. Get Cancellation Quote (Optional but good practice, or mostly just Cancel)
+        // Duffel Stays cancellation is often: Confirm Cancellation directly.
+
+        const cancellation = await duffel.stays.bookings.cancel(id);
+
+        console.log("[Backend] Cancellation Confirmed:", JSON.stringify(cancellation.data));
+        res.json(cancellation.data);
+    } catch (error) {
+        console.error('Duffel Cancellation Error:', error);
+        res.status(500).json({
+            error: error.message,
+            details: error.errors
+        });
+    }
+});
+
 export default router;

@@ -213,6 +213,7 @@ export const duffelService = {
       success: true,
       data: {
         booking_reference: booking.reference,
+        booking_id: booking.id, // [NEW]
         hotel: {
           id: hotel.id,
           name: hotel.name,

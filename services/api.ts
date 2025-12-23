@@ -138,6 +138,17 @@ export const api = {
 
       return Array.from(new Set(relevantUsers.map(u => u.id)))
         .map(id => relevantUsers.find(u => u.id === id)!);
+    },
+
+    cancelBooking: async (bookingId: string): Promise<any> => {
+      const response = await fetch(`/api/hotels/bookings/${bookingId}/cancel`, {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to cancel booking");
+      }
+      return await response.json();
     }
   },
 
