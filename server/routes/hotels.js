@@ -78,8 +78,8 @@ router.post('/book', async (req, res) => {
             quote_id: quoteId,
             guests: guests,
             email: email,
-            phone_number: phoneNumber,
-            payment: { type: "balance" }
+            phone_number: phoneNumber
+            // payment: { type: "balance" } // Removing explicit payment to rely on default/account setting
         };
 
         console.log("[Backend] Submitting Booking with Payload:", JSON.stringify(bookingPayload, null, 2));
