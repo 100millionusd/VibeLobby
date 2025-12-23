@@ -33,7 +33,7 @@ export const duffelService = {
               longitude: hotel.coordinates.lng
             }
           },
-
+          // Ensure inputs are valid Date dates before converting
           checkInDate: new Date(checkIn).toISOString().split('T')[0],
           checkOutDate: new Date(checkOut).toISOString().split('T')[0],
           guests: Array(guests).fill({ type: 'adult' })
@@ -62,17 +62,31 @@ export const duffelService = {
           const realHotelId = result.id;
           const hotelName = result.accommodation?.name || result.name || 'Unknown Hotel';
 
-          // Log less verbose to avoid spam, unless error
-          // console.log(`Checking rates for: ${hotelName}`);
+          let roomsList: any[] = [];
 
-          const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
-          const payload = await ratesRes.json();
+          // Strategy A: Check if Search Result already has rooms (inside accommodation)
+          // Duffel docs say "Each accommodation is returned with information on the cheapest available rate."
+          // But sometimes full room list is there.
+          if (Array.isArray(result.accommodation?.rooms) && result.accommodation.rooms.length > 0) {
+            console.log(`[Duffel] Found rooms in initial search for ${hotelName}`);
+            roomsList = result.accommodation.rooms;
+          } else {
+            // Strategy B: Fetch Rates Endpoint
+            const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
+            const payload = await ratesRes.json();
 
-          // Debug keys to ensure we parsed correctly
-          // console.log(`[Duffel] Payload Keys for ${hotelName}:`, Object.keys(payload));
+            // Universal Room Extraction: Check all possible locations per Docs & Observations
+            roomsList = payload.rooms
+              || payload.data?.rooms
+              || payload.accommodation?.rooms
+              || payload.data?.accommodation?.rooms
+              || [];
 
-          // Handle wrapping: sometimes payload.rooms, sometimes payload.data.rooms
-          const roomsList = payload.rooms || payload.data?.rooms || [];
+            // Debug: if we found the price but no rooms
+            if (roomsList.length === 0 && payload.cheapest_rate_total_amount) {
+              console.warn(`[Duffel] Hotel ${hotelName} has price ${payload.cheapest_rate_total_amount} but structure mismatch? Keys: ${Object.keys(payload)}`);
+            }
+          }
 
           if (Array.isArray(roomsList) && roomsList.length > 0) {
             console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
@@ -95,11 +109,6 @@ export const duffelService = {
                 bedType: 'Standard',
                 capacity: 2
               }));
-            }
-          } else {
-            // Checking cheapest_rate specifically as per debug logs
-            if (payload.cheapest_rate_total_amount) {
-              console.warn(`[Duffel] Hotel ${hotelName} has price ${payload.cheapest_rate_total_amount} but 0 rooms. Test mode quirk? Skipping.`);
             }
           }
         } catch (innerErr) {
