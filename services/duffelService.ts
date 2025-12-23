@@ -55,15 +55,20 @@ export const duffelService = {
       const realHotelId = results[0].id;
 
       const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
-      const ratesData = await ratesRes.json();
+      const payload = await ratesRes.json();
 
-      if (!Array.isArray(ratesData)) {
-        console.error("Duffel Rates API returned error:", ratesData);
+      // Duffel fetchAllRates returns the Search Result object with a 'rates' property?
+      // Or maybe just the rates list? The log showed an object.
+      // Let's support both: direct array or property inside object.
+      const ratesList = Array.isArray(payload) ? payload : (payload.rates || []);
+
+      if (!Array.isArray(ratesList) || ratesList.length === 0) {
+        console.error("Duffel Rates API returned invalid format or empty:", payload);
         throw new Error("Unable to fetch rates for this hotel.");
       }
 
       // 3. Map Duffel Rates to our RoomOffer type
-      return ratesData.map((rate: any) => ({
+      return ratesList.map((rate: any) => ({
         id: rate.id, // This is the Rate ID needed for quoting
         name: rate.room_type_name || 'Standard Room',
         description: `Real stay at ${results[0].accommodation?.name || results[0].name || 'this hotel'}`,
