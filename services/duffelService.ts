@@ -57,7 +57,7 @@ export const duffelService = {
       const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
       const payload = await ratesRes.json();
 
-      console.log("Duffel Rates Payload Keys:", Object.keys(payload));
+      console.log("DEBUG RATES PAYLOAD KEYS:", Object.keys(payload));
 
       // Duffel fetchAllRates returns the Search Result object with a 'rates' property?
       // Or maybe just the rates list? The log showed an object.
