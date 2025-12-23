@@ -26,7 +26,7 @@ import { AuthAdapter } from "@web3auth/auth-adapter";
 
 export const web3auth = new Web3Auth({
   clientId: CLIENT_ID,
-  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+  web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
   privateKeyProvider,
   sessionTime: 86400, // 1 day
   uiConfig: {
