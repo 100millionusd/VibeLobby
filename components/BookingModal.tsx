@@ -145,25 +145,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
       console.log("Quote Created:", quote.id, quote.total_amount, quote.total_currency);
 
       // 2. Create Payment Intent (Server-Side)
-      console.log("Creating Payment Intent...");
-      const clientToken = await duffelService.createPaymentIntent(quote.total_amount, quote.total_currency);
-      console.log("Payment Intent Token Received");
+      // SKIPPED: Duffel Payments is unavailable in this account's region (Sweden).
+      // We proceed with the "Agency Balance" model which is the fallback production flow.
+      console.log("Region Restriction: Skipping Payment Intent (Unavailable in Sweden).");
+      console.log("Proceeding to Book via Agency Balance...");
 
       // 3. Confirm Payment via Duffel UI Component (Trigger 3DS)
-      if (duffelInstance) {
-        console.log("Starting 3DS Flow...");
-        // NOTE: confirmPaymentIntent is the method for the Intent flow
-        const result = await duffelInstance.confirmPaymentIntent(clientToken);
+      // SKIPPED: No Intent to confirm.
 
-        if (result.error) {
-          throw new Error(result.error.message || "Payment verification failed.");
-        }
-        console.log("Payment Confirmed/Authorized!");
-      } else {
-        throw new Error("Payment component not initialized.");
-      }
-
-      // 4. Finalize Booking (Back-End uses 'balance' which was topped up by Intent)
+      // 4. Finalize Booking (Back-End uses 'balance')
       console.log("Finalizing Booking...");
       const confirmation = await duffelService.finalizeBooking(
         quote.id,
