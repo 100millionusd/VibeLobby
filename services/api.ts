@@ -1,5 +1,6 @@
 import { ScoredHotel, User, ChatMessage, Nudge } from '../types';
 import { getHotelsByActivity } from './vibeAlgorithm';
+import { duffelService } from './duffelService';
 import { MOCK_BOOKINGS, USERS } from './mockData';
 import { supabase } from './supabaseClient';
 
@@ -98,8 +99,25 @@ export const api = {
   },
 
   hotels: {
-    search: async (interest: string, city: string): Promise<ScoredHotel[]> => {
-      // Keep using local algorithm for now (Phase 1)
+    search: async (
+      interest: string,
+      city: string,
+      checkIn: Date = new Date(),
+      checkOut: Date = new Date(Date.now() + 86400000),
+      rooms: number = 1,
+      guests: number = 2
+    ): Promise<ScoredHotel[]> => {
+      console.log(`Searching Real Duffel Inventory for: ${city}`);
+
+      const realHotels = await duffelService.searchHotels(city, checkIn, checkOut, rooms, guests);
+
+      if (realHotels.length > 0) {
+        // Sort by our synthetic vibe score
+        return realHotels.sort((a, b) => b.vibeScore - a.vibeScore);
+      }
+
+      // Fallback to Mock if Duffel has no coverage for better demo experience
+      console.warn("Duffel returned no results, falling back to mock data.");
       await delay(600);
       return getHotelsByActivity(interest, city);
     },

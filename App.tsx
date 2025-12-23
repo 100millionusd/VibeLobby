@@ -129,7 +129,14 @@ const App: React.FC = () => {
     // 2. API Call (Async)
     const trimmedCity = selectedCity.trim();
     try {
-      const sortedHotels = await api.hotels.search(targetVibe, trimmedCity);
+      const sortedHotels = await api.hotels.search(
+        targetVibe,
+        trimmedCity,
+        new Date(checkIn),
+        new Date(checkOut),
+        roomCount,
+        guestCount
+      );
       setResults(sortedHotels);
       setActiveSearchTerm(targetVibe);
       setDisplaySearchTerm(userDisplay);
