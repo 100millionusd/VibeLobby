@@ -27,7 +27,7 @@ export const duffelService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           location: {
-            radius: 5,
+            radius: 10, // Increased to 10km to match successful debug script
             geographic_coordinates: {
               latitude: hotel.coordinates.lat,
               longitude: hotel.coordinates.lng
@@ -67,7 +67,11 @@ export const duffelService = {
           const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
           const payload = await ratesRes.json();
 
-          const roomsList = payload.rooms || [];
+          // Debug keys to ensure we parsed correctly
+          // console.log(`[Duffel] Payload Keys for ${hotelName}:`, Object.keys(payload));
+
+          // Handle wrapping: sometimes payload.rooms, sometimes payload.data.rooms
+          const roomsList = payload.rooms || payload.data?.rooms || [];
 
           if (Array.isArray(roomsList) && roomsList.length > 0) {
             console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
