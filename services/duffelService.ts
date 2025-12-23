@@ -36,7 +36,7 @@ export const duffelService = {
           // Ensure inputs are valid Date dates before converting
           checkInDate: new Date(checkIn).toISOString().split('T')[0],
           checkOutDate: new Date(checkOut).toISOString().split('T')[0],
-          guests: Array(guests).fill({ type: 'adult' })
+          guests: [{ type: 'adult' }] // DEBUG: Force 1 guest to match working script
         })
       });
 
@@ -84,12 +84,16 @@ export const duffelService = {
             }
             // --- DEBUG BLOCK ENDS ---
 
-            // Universal Room Extraction: Check all possible locations per Docs & Observations
-            roomsList = payload.rooms
-              || payload.data?.rooms
-              || payload.accommodation?.rooms
-              || payload.data?.accommodation?.rooms
-              || [];
+            // Universal Room Extraction: strictly check for ARRAYS
+            // 'rooms' might be an integer (count) in test mode, so we must ignore it if it's not an array.
+            const candidates = [
+              payload.rooms,
+              payload.data?.rooms,
+              payload.accommodation?.rooms,
+              payload.data?.accommodation?.rooms
+            ];
+
+            roomsList = candidates.find(c => Array.isArray(c)) || [];
 
             // Strategy C: Fallback for Price-Only Responses
             // If Duffel gives us a price but no room list, we use the price to make a valid offer.
@@ -97,8 +101,6 @@ export const duffelService = {
               console.warn(`[Duffel] Hotel ${hotelName} has price ${payload.cheapest_rate_total_amount} but no room details. Using Generic Room fallback.`);
 
               // Create a verified "Standard Room" using the REAL price and currency from Duffel
-              // We use the 'id' from the payload (or hotel id if missing) as the rate ID to lock.
-              // In a real verification scenarios, we might need a specific rate_id, but the payload usually has an ID.
               const genericRate = {
                 id: payload.id || `rate_generic_${realHotelId}`,
                 _roomName: "Standard Room (Best Rate)",
