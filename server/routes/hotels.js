@@ -35,7 +35,15 @@ router.post('/search', async (req, res) => {
 router.get('/:id/rates', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`[Backend] Fetching rates for ID: ${id}`);
         const rates = await duffel.stays.searchResults.fetchAllRates(id);
+
+        const roomsCount = rates.data.rooms ? rates.data.rooms.length : 0;
+        console.log(`[Backend] Rates response for ${id}: ${roomsCount} rooms found.`);
+        if (roomsCount === 0) {
+            console.log(`[Backend] Empty rooms payload keys: ${Object.keys(rates.data)}`);
+        }
+
         res.json(rates.data);
     } catch (error) {
         console.error('Duffel Rates Error:', error);
