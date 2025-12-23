@@ -49,47 +49,54 @@ export const duffelService = {
         throw new Error("No availability found for these dates.");
       }
 
-      // 2. Get rates for the first result
-      // We assume the first result is the best match for the location/search
-      const firstResult = results[0];
-      const realHotelId = firstResult.id;
-      const hotelName = firstResult.accommodation?.name || firstResult.name || 'Unknown Hotel';
+      // 2. Iterate through results to find one with available rates
+      // Sometimes the top result might have cached availability but fail on detailed rates fetch.
+      const attempts = results.slice(0, 3);
 
-      console.log(`Fetching rates for hotel: ${hotelName} (${realHotelId})`);
+      for (const result of attempts) {
+        try {
+          const realHotelId = result.id;
+          const hotelName = result.accommodation?.name || result.name || 'Unknown Hotel';
+          console.log(`Checking rates for hotel: ${hotelName} (${realHotelId})`);
 
-      const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
-      const payload = await ratesRes.json();
+          const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
+          const payload = await ratesRes.json();
 
-      // Duffel Stays API: "rooms" is the key containing the rates list
-      const roomsList = payload.rooms || [];
+          const roomsList = payload.rooms || [];
 
-      if (!Array.isArray(roomsList) || roomsList.length === 0) {
-        console.warn("Duffel Rates API returned no rooms:", payload);
-        throw new Error("No rooms available for this hotel.");
+          if (Array.isArray(roomsList) && roomsList.length > 0) {
+            // Found a hotel with rates!
+            console.log(`Found ${roomsList.length} rooms for ${hotelName}`);
+
+            const allRates = roomsList.flatMap((room: any) => {
+              return (room.rates || []).map((rate: any) => ({
+                ...rate,
+                _roomName: room.name
+              }));
+            });
+
+            if (allRates.length > 0) {
+              return allRates.map((rate: any) => ({
+                id: rate.id,
+                name: rate._roomName || 'Standard Room',
+                description: `Real stay at ${hotelName}`,
+                price: parseFloat(rate.total_amount),
+                currency: rate.total_currency,
+                cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',
+                bedType: 'Standard',
+                capacity: 2
+              }));
+            }
+          } else {
+            console.warn(`Hotel ${hotelName} returned no detailed rates. Trying next...`);
+          }
+        } catch (innerErr) {
+          console.warn(`Error fetching rates for result ${result.id}`, innerErr);
+        }
       }
 
-      // Flatten rates from all rooms
-      const allRates = roomsList.flatMap((room: any) => {
-        return (room.rates || []).map((rate: any) => ({
-          ...rate,
-          _roomName: room.name // Preserve room name for display
-        }));
-      });
-
-      if (allRates.length === 0) {
-        throw new Error("No specific rates found (check request parameters).");
-      }
-
-      return allRates.map((rate: any) => ({
-        id: rate.id, // This is the Rate ID needed for quoting
-        name: rate._roomName || 'Standard Room',
-        description: `Real stay at ${hotelName}`,
-        price: parseFloat(rate.total_amount),
-        currency: rate.total_currency,
-        cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',
-        bedType: 'Standard', // Duffel doesn't always return bed type in list
-        capacity: 2
-      }));
+      console.error("Duffel API: No rates found in top results.");
+      throw new Error("No availability details found for the top hotels.");
 
     } catch (error: any) {
       console.error("Duffel API Error:", error);
