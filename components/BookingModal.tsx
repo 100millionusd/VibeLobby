@@ -139,45 +139,48 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
     const checkOut = searchParams.checkOut;
 
     try {
-      let paymentToken = "tok_visa_simulation";
+      // 1. Create Quote to get Final Price and ID
+      console.log("Creating Quote...");
+      const quote = await duffelService.createQuote(selectedOffer.id);
+      console.log("Quote Created:", quote.id, quote.total_amount, quote.total_currency);
 
-      // 1. Tokenize Card via Duffel Component
+      // 2. Create Payment Intent (Server-Side)
+      console.log("Creating Payment Intent...");
+      const clientToken = await duffelService.createPaymentIntent(quote.total_amount, quote.total_currency);
+      console.log("Payment Intent Token Received");
+
+      // 3. Confirm Payment via Duffel UI Component (Trigger 3DS)
       if (duffelInstance) {
-        try {
-          const result = await duffelInstance.createCardToken();
-          if (result.error) {
-            throw new Error(result.error.message);
-          }
-          paymentToken = result.token;
-        } catch (e: any) {
-          // Fallback for demo purposes if the API key is invalid/placeholder
-          // In production, you would throw here: throw e;
-          console.warn("Duffel Tokenization failed (expected without valid key). Using mock token.");
-          paymentToken = "tok_mock_fallback";
+        console.log("Starting 3DS Flow...");
+        // NOTE: confirmPaymentIntent is the method for the Intent flow
+        const result = await duffelInstance.confirmPaymentIntent(clientToken);
+
+        if (result.error) {
+          throw new Error(result.error.message || "Payment verification failed.");
         }
+        console.log("Payment Confirmed/Authorized!");
+      } else {
+        throw new Error("Payment component not initialized.");
       }
 
-      // 2. Call our Backend Integration Service
-      const confirmation = await duffelService.bookHotel(
-        hotel,
-        selectedOffer.id,
+      // 4. Finalize Booking (Back-End uses 'balance' which was topped up by Intent)
+      console.log("Finalizing Booking...");
+      const confirmation = await duffelService.finalizeBooking(
+        quote.id,
         guestDetails,
-        paymentToken,
         checkIn,
-        checkOut
+        checkOut,
+        hotel
       );
 
       if (confirmation.success) {
         setBookingRef(confirmation.data.booking_reference);
-
-        // 3. Trigger the "Unlock Logic" in AuthContext
         grantDigitalKey(confirmation);
-
         setStep('confirmed');
       }
     } catch (e: any) {
-      console.error("Payment Failed", e);
-      setErrorMsg(e.message || "Payment declined. Please check your card details.");
+      console.error("Process Failed", e);
+      setErrorMsg(e.message || "An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }

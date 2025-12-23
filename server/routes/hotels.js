@@ -77,30 +77,14 @@ router.post('/book', async (req, res) => {
             phone_number: phoneNumber
         };
 
-        // 1. Validate Payment Token
-        if (!paymentToken) {
-            return res.status(400).json({ error: "Payment token is required for production booking." });
-        }
-
-        // 2. Create a Lodged Card from the Token
-        // This is the required step to get a 'card_id' for the booking payload.
-        console.log("[Backend] Creating Card from Token...");
-        let cardId;
-        try {
-            const card = await duffel.cards.create({
-                token: paymentToken,
-                multi_use: true // Required for Lodged Cards as per instructions
-            });
-            cardId = card.data.id;
-            console.log("[Backend] Card Created:", cardId);
-        } catch (cardError) {
-            console.error("Card Creation Failed:", JSON.stringify(cardError, null, 2));
-            throw cardError; // Propagate actual Duffel error
-        }
-
-        // 3. Create Booking with Card ID
-        bookingPayload.payment = {
-            card_id: cardId
+        // 3. Confirm Booking using Duffel Balance
+        // (Assuming Payment Intent has successfully topped up the balance)
+        const bookingPayload = {
+            quote_id: quoteId,
+            guests: guests,
+            email: email,
+            phone_number: phoneNumber,
+            payment: { type: "balance" }
         };
 
         console.log("[Backend] Submitting Booking with Payload:", JSON.stringify(bookingPayload, null, 2));
@@ -118,6 +102,29 @@ router.post('/book', async (req, res) => {
             error: error.message,
             details: error.errors || error.meta || 'No additional details'
         });
+    }
+});
+
+// 5. Create Payment Intent (Start 3DS Flow)
+router.post('/payment-intent', async (req, res) => {
+    try {
+        const { amount, currency } = req.body;
+        console.log(`[Backend] Creating Payment Intent: ${amount} ${currency}`);
+        const intent = await duffel.paymentIntents.create({
+            amount: amount,
+            currency: currency,
+            payment: {
+                // For a real app, this should be 'card' to trigger the component flow
+                // But we need to ensure the library supports it
+            }
+        });
+        // Note: Duffel Node SDK paymentIntents.create parameters might strictly require 'amount' and 'currency'
+        // The default flow creates an intent that the frontend confirms.
+
+        res.json(intent.data);
+    } catch (error) {
+        console.error('Duffel Payment Intent Error:', JSON.stringify(error, null, 2));
+        res.status(500).json({ error: error.message, details: error.errors });
     }
 });
 

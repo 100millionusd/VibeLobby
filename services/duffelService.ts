@@ -158,38 +158,61 @@ export const duffelService = {
   /**
    * 2. Create Booking
    */
-  bookHotel: async (
-    hotel: ScoredHotel,
-    offerId: string,
-    guest: GuestDetails,
-    paymentToken?: string,
-    checkInDate?: Date,
-    checkOutDate?: Date
-  ): Promise<BookingConfirmationResponse> => {
-
-    // 1. Create Quote (Lock Price)
-    const quoteRes = await fetch('/api/hotels/quote', {
+  /**
+   * 2a. Create Quote (Lock Price)
+   */
+  createQuote: async (offerId: string): Promise<any> => {
+    const res = await fetch('/api/hotels/quote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rateId: offerId })
     });
-    const quote = await quoteRes.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Quote creation failed");
+    return data;
+  },
 
-    // 2. Create Booking
+  /**
+   * 2b. Create Payment Intent (Get Client Token)
+   */
+  createPaymentIntent: async (amount: string, currency: string): Promise<string> => {
+    const res = await fetch('/api/hotels/payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, currency })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Payment Intent failed");
+    return data.client_token;
+  },
+
+  /**
+   * 2c. Finalize Booking (After Payment Scucess)
+   */
+  finalizeBooking: async (
+    quoteId: string,
+    guest: GuestDetails,
+    checkInDate: Date,
+    checkOutDate: Date,
+    hotel: ScoredHotel
+  ): Promise<BookingConfirmationResponse> => {
+
+    // Call Booking Endpoint (which now uses type: 'balance')
+    // We assume the Payment Intent has succeeded and funded the balance.
     const bookingRes = await fetch('/api/hotels/book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        quoteId: quote.id,
+        quoteId: quoteId,
         guests: [{
           given_name: guest.firstName,
           family_name: guest.lastName,
-          born_on: '1990-01-01', // Placeholder as UI does not collect this
+          born_on: '1990-01-01',
           email: guest.email
         }],
         email: guest.email,
-        phoneNumber: guest.phoneNumber || '+16505550100', // Use user input, fallback to test number if empty
-        paymentToken: paymentToken
+        phoneNumber: guest.phoneNumber || '+16505550100', // Default if missing
+        // No paymentToken needed here because we paid via Intent -> Balance
       })
     });
 
