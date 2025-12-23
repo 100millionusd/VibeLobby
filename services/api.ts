@@ -114,12 +114,9 @@ export const api = {
       if (realHotels.length > 0) {
         // Sort by our synthetic vibe score
         return realHotels.sort((a, b) => b.vibeScore - a.vibeScore);
+      } else {
+        return [];
       }
-
-      // Fallback to Mock if Duffel has no coverage for better demo experience
-      console.warn("Duffel returned no results, falling back to mock data.");
-      await delay(600);
-      return getHotelsByActivity(interest, city);
     },
 
     getGuests: async (hotelId: string, interest: string): Promise<User[]> => {

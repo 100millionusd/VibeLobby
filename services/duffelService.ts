@@ -45,23 +45,28 @@ export const duffelService = {
       const results = Array.isArray(searchData) ? searchData : (searchData.results || []);
 
       if (results.length === 0) {
-        console.warn("Duffel API returned no results. Using mock data.");
-        return duffelService.getMockOffers(hotel);
+        console.warn("Duffel API returned no results.");
+        throw new Error("No availability found for these dates.");
       }
 
       // 2. Get rates for the first result (Best Match)
       // In a full app, we would let the user choose the hotel from the list.
-      // Here we map the "Mock Hotel" to the "First Real Hotel Found".
+      // Here we map the "real hotel" we just found near the coordinates.
       const realHotelId = results[0].id;
 
       const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
       const ratesData = await ratesRes.json();
 
+      if (!Array.isArray(ratesData)) {
+        console.error("Duffel Rates API returned error:", ratesData);
+        throw new Error("Unable to fetch rates for this hotel.");
+      }
+
       // 3. Map Duffel Rates to our RoomOffer type
       return ratesData.map((rate: any) => ({
         id: rate.id, // This is the Rate ID needed for quoting
         name: rate.room_type_name || 'Standard Room',
-        description: `Real stay at ${searchData.results[0].name}`,
+        description: `Real stay at ${results[0].accommodation?.name || results[0].name || 'this hotel'}`,
         price: parseFloat(rate.total_amount),
         currency: rate.total_currency,
         cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',
@@ -69,9 +74,9 @@ export const duffelService = {
         capacity: 2
       }));
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Duffel API Error:", error);
-      return duffelService.getMockOffers(hotel);
+      throw new Error(error.message || "Failed to search accommodations");
     }
   },
 
@@ -213,7 +218,7 @@ export const duffelService = {
 
     } catch (e) {
       console.error("Duffel Real Search Failed", e);
-      return [];
+      throw e; // Propagate error
     }
   },
 
