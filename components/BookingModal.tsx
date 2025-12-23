@@ -11,8 +11,8 @@ interface BookingModalProps {
   searchParams: {
     checkIn: Date;
     checkOut: Date;
-    guests: number;
-    rooms: number;
+    guestCount: number;
+    roomCount: number;
   };
   onClose: () => void;
   onConfirm: () => void;
@@ -47,8 +47,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
           hotel,
           searchParams.checkIn,
           searchParams.checkOut,
-          searchParams.rooms,
-          searchParams.guests
+          searchParams.roomCount,
+          searchParams.guestCount
         );
         setOffers(rooms);
         setStep('selection');
