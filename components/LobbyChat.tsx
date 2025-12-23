@@ -474,7 +474,8 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         const msg = await api.chat.sendMessage(activeChannelId, icebreaker, {
           id: 'system',
           name: 'Vibe AI',
-          avatar: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=150', // Futuristic AI/Robot Avatar
+          // Use matching friendly avatar based on context
+          avatar: isCityChat ? '/avatars/city_guide.png' : '/avatars/hotel_concierge.png',
           bio: 'I help break the ice.',
           digitalKeys: []
         });

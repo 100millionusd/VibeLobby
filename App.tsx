@@ -730,10 +730,17 @@ const App: React.FC = () => {
                     setActiveChannel({ id: `city:${cityKey.city}`, name: cityKey.city });
                     setShowLobby(true);
                   }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-xl transition-transform hover:scale-110 flex items-center gap-2"
+                  className="bg-purple-600 hover:bg-purple-700 text-white p-3 pr-5 rounded-full shadow-xl transition-transform hover:scale-105 flex items-center gap-3 border-2 border-white/20"
                 >
-                  <Globe size={24} />
-                  <span className="font-bold pr-2 hidden md:inline">{cityKey.city} Lobby</span>
+                  <img
+                    src="/avatars/city_guide.png"
+                    alt="City Guide"
+                    className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
+                  />
+                  <div className="flex flex-col items-start leading-tight">
+                    <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">City Guide</span>
+                    <span className="font-bold text-sm hidden md:inline">{cityKey.city} Lobby</span>
+                  </div>
                 </button>
               )}
 
@@ -760,17 +767,24 @@ const App: React.FC = () => {
                   setActiveChannel({ id: primaryKey.hotelId, name: primaryKey.hotelName });
                   setShowLobby(true);
                 }}
-                className="bg-brand-600 hover:bg-brand-700 text-white p-4 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center gap-2"
+                className="bg-brand-600 hover:bg-brand-700 text-white p-3 pr-6 rounded-full shadow-2xl transition-transform hover:scale-105 flex items-center gap-3 border-4 border-white/20"
               >
                 <div className="relative">
-                  <MessageCircle size={28} />
+                  <img
+                    src="/avatars/hotel_concierge.png"
+                    alt="Concierge"
+                    className="w-12 h-12 rounded-full border-2 border-white shadow-md object-cover"
+                  />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce">
+                    <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white border-2 border-white shadow-sm animate-bounce z-10">
                       {unreadCount}
                     </span>
                   )}
                 </div>
-                <span className="font-bold pr-1 hidden md:inline">{primaryKey.hotelName}</span>
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Concierge</span>
+                  <span className="font-bold text-base hidden md:inline max-w-[150px] truncate">{primaryKey.hotelName}</span>
+                </div>
               </button>
             </div>
           );
