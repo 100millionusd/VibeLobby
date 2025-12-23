@@ -50,14 +50,19 @@ export const duffelService = {
       }
 
       // 2. Iterate through results to find one with available rates
-      // Sometimes the top result might have cached availability but fail on detailed rates fetch.
-      const attempts = results.slice(0, 3);
+      // In Test Mode, some hotels return "cached" availability (Search Result)
+      // but "empty" detailed rates (no rooms). We scan up to 20 to find a working one.
+      const attempts = results.slice(0, 20);
+
+      console.log(`[Duffel] Scanning top ${attempts.length} hotels for detailed rates...`);
 
       for (const result of attempts) {
         try {
           const realHotelId = result.id;
           const hotelName = result.accommodation?.name || result.name || 'Unknown Hotel';
-          console.log(`Checking rates for hotel: ${hotelName} (${realHotelId})`);
+
+          // Log less verbose to avoid spam, unless error
+          // console.log(`Checking rates for: ${hotelName}`);
 
           const ratesRes = await fetch(`/api/hotels/${realHotelId}/rates`);
           const payload = await ratesRes.json();
@@ -65,8 +70,7 @@ export const duffelService = {
           const roomsList = payload.rooms || [];
 
           if (Array.isArray(roomsList) && roomsList.length > 0) {
-            // Found a hotel with rates!
-            console.log(`Found ${roomsList.length} rooms for ${hotelName}`);
+            console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
 
             const allRates = roomsList.flatMap((room: any) => {
               return (room.rates || []).map((rate: any) => ({
@@ -88,15 +92,18 @@ export const duffelService = {
               }));
             }
           } else {
-            console.warn(`Hotel ${hotelName} returned no detailed rates. Trying next...`);
+            // Checking cheapest_rate specifically as per debug logs
+            if (payload.cheapest_rate_total_amount) {
+              console.warn(`[Duffel] Hotel ${hotelName} has price ${payload.cheapest_rate_total_amount} but 0 rooms. Test mode quirk? Skipping.`);
+            }
           }
         } catch (innerErr) {
-          console.warn(`Error fetching rates for result ${result.id}`, innerErr);
+          console.warn(`[Duffel] Error fetching rates for result ${result.id}`, innerErr);
         }
       }
 
-      console.error("Duffel API: No rates found in top results.");
-      throw new Error("No availability details found for the top hotels.");
+      console.error("[Duffel] Critical: No rates found in the scanned results.");
+      throw new Error("No bookable rooms found. Please try different dates or location.");
 
     } catch (error: any) {
       console.error("Duffel API Error:", error);
