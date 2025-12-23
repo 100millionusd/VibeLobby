@@ -7,11 +7,12 @@ import { RoomOffer, ScoredHotel, GuestDetails, BookingConfirmationResponse } fro
  * Here we mock the search, offer, and order creation flow.
  */
 
-const ROOM_TYPES = [
-  { name: 'Standard King', multiplier: 1.0, desc: 'Cozy room with a king-sized bed and city views.', beds: '1 King' },
-  { name: 'Double Twin', multiplier: 1.1, desc: 'Two twin beds, perfect for friends sharing the vibe.', beds: '2 Twins' },
-  { name: 'Vibe Suite', multiplier: 1.8, desc: 'Spacious suite with lounge area, ideal for pre-drinks.', beds: '1 King + Sofa' },
-];
+/**
+ * DUFFEL STAYS API (Simulated)
+ * 
+ * In a real backend, this would utilize the @duffel/api-node client.
+ * Here we mock the search, offer, and order creation flow.
+ */
 
 export const duffelService = {
 
@@ -154,19 +155,6 @@ export const duffelService = {
     }
   },
 
-  getMockOffers: (hotel: ScoredHotel): RoomOffer[] => {
-    return ROOM_TYPES.map((type, index) => ({
-      id: `offer_${hotel.id}_${index}`,
-      name: type.name,
-      description: type.desc,
-      price: Math.round(hotel.pricePerNight * type.multiplier),
-      currency: 'USD',
-      cancellationPolicy: 'refundable',
-      bedType: type.beds,
-      capacity: 2
-    }));
-  },
-
   /**
    * 2. Create Booking
    */
@@ -200,7 +188,7 @@ export const duffelService = {
           email: guest.email
         }],
         email: guest.email,
-        phoneNumber: '+15555555555', // Placeholder
+        phoneNumber: '+16505550100', // Valid E.164 format for testing
         paymentToken: paymentToken
       })
     });

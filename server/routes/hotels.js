@@ -57,18 +57,6 @@ router.post('/quote', async (req, res) => {
     try {
         const { rateId } = req.body;
 
-        // Mock Fallback
-        if (rateId && rateId.startsWith('offer_')) {
-            console.log("Using Mock Quote for:", rateId);
-            return res.json({
-                id: `quote_mock_${Date.now()}`,
-                total_amount: "250.00",
-                total_currency: "USD",
-                tax_amount: "25.00",
-                base_amount: "225.00"
-            });
-        }
-
         const quote = await duffel.stays.quotes.create(rateId);
         res.json(quote.data);
     } catch (error) {
@@ -82,18 +70,6 @@ router.post('/book', async (req, res) => {
     try {
         const { quoteId, guests, email, phoneNumber, paymentToken } = req.body;
 
-        // Mock Fallback
-        if (quoteId && quoteId.startsWith('quote_mock_')) {
-            console.log("Using Mock Booking for:", quoteId);
-            return res.json({
-                id: `booking_mock_${Date.now()}`,
-                reference: `REF${Math.floor(Math.random() * 10000)}`,
-                status: "confirmed",
-                guests: guests,
-                email: email
-            });
-        }
-
         const bookingPayload = {
             quote_id: quoteId,
             guests: guests, // [{ given_name, family_name, born_on, ... }]
@@ -101,12 +77,11 @@ router.post('/book', async (req, res) => {
             phone_number: phoneNumber
         };
 
-        if (paymentToken) {
-            bookingPayload.payment = {
-                type: "card",
-                token: paymentToken
-            };
-        }
+        // Use Duffel Balance for instant 3DS-free payment in Test Mode
+        // This simulates the Agency paying Duffel.
+        bookingPayload.payment = {
+            type: "balance"
+        };
 
         const booking = await duffel.stays.bookings.create(bookingPayload);
 

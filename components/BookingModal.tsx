@@ -307,6 +307,17 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
                     placeholder="alice@example.com"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Phone Number (Mobile)</label>
+                  <input
+                    required
+                    type="tel"
+                    value={guestDetails.phoneNumber || ''}
+                    onChange={e => setGuestDetails({ ...guestDetails, phoneNumber: e.target.value })}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                    placeholder="+44 7911 123456"
+                  />
+                </div>
               </div>
 
               <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex justify-center items-center">

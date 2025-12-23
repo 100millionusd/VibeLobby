@@ -125,6 +125,7 @@ export interface GuestDetails {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber?: string; // E.164
 }
 
 export interface BookingConfirmationResponse {
