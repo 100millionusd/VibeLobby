@@ -59,20 +59,31 @@ export const duffelService = {
 
       console.log("DEBUG RATES PAYLOAD KEYS:", Object.keys(payload));
 
-      // Duffel fetchAllRates returns the Search Result object with a 'rates' property?
-      // Or maybe just the rates list? The log showed an object.
-      // Let's support both: direct array or property inside object.
-      const ratesList = Array.isArray(payload) ? payload : (payload.rates || []);
+      // Duffel Stays API: "rooms" contains a list of rooms, each with "rates"
+      const roomsList = payload.rooms || [];
 
-      if (!Array.isArray(ratesList) || ratesList.length === 0) {
-        console.error("Duffel Rates API returned invalid format or empty:", payload);
+      if (!Array.isArray(roomsList) || roomsList.length === 0) {
+        console.error("Duffel Rates API returned no rooms:", payload);
         throw new Error("Unable to fetch rates for this hotel.");
       }
 
+      // Flatten rates from all rooms
+      // Type: Rate & { roomName: string }
+      const allRates = roomsList.flatMap((room: any) => {
+        return (room.rates || []).map((rate: any) => ({
+          ...rate,
+          _roomName: room.name // Preserve room name for display
+        }));
+      });
+
+      if (allRates.length === 0) {
+        throw new Error("No rates available for these rooms.");
+      }
+
       // 3. Map Duffel Rates to our RoomOffer type
-      return ratesList.map((rate: any) => ({
+      return allRates.map((rate: any) => ({
         id: rate.id, // This is the Rate ID needed for quoting
-        name: rate.room_type_name || 'Standard Room',
+        name: rate._roomName || 'Standard Room',
         description: `Real stay at ${results[0].accommodation?.name || results[0].name || 'this hotel'}`,
         price: parseFloat(rate.total_amount),
         currency: rate.total_currency,
