@@ -327,7 +327,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
 
                   // Update App Badge
                   if ('setAppBadge' in navigator) {
-                    const totalUnread = Object.values(newCounts).reduce((a: number, b: unknown) => a + (b as number), 0);
+                    const totalUnread = Object.values(newCounts).reduce((a: number, b: any) => a + (Number(b) || 0), 0);
                     navigator.setAppBadge(totalUnread).catch(e => console.error("Badge error", e));
                   }
 
@@ -551,6 +551,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
         success: true,
         data: {
           booking_reference: "OCR-" + Math.floor(Math.random() * 10000),
+          booking_id: "OCR-ID-" + Math.floor(Math.random() * 10000),
           hotel: { id: hotel.id, name: hotel.name, city: hotel.city },
           room: { name: "Uploaded Receipt Room" },
           dates: { check_in: new Date().toISOString(), check_out: new Date(Date.now() + 86400000 * 3).toISOString() },

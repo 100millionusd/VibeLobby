@@ -653,8 +653,8 @@ const App: React.FC = () => {
             searchParams={{
               checkIn: new Date(checkIn),
               checkOut: new Date(checkOut),
-              guests: guestCount,
-              rooms: roomCount
+              guestCount: guestCount,
+              roomCount: roomCount
             }}
             onClose={() => setShowBooking(false)}
             onConfirm={handleBookingConfirm}
