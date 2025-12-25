@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Shield, FileText, Cookie } from 'lucide-react';
+import { FileText, Shield, Cookie, X } from 'lucide-react';
 
 export type LegalPage = 'privacy' | 'terms' | 'cookies';
 
@@ -8,83 +8,32 @@ interface LegalModalProps {
   onClose: () => void;
 }
 
-const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; content: React.ReactNode }> = {
+const CONTENT = {
   privacy: {
     title: 'Privacy Policy',
     icon: Shield,
     content: (
       <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
         <p><strong>Last Updated:</strong> December 25, 2025</p>
+        <p>Your privacy is critical to us. This policy outlines how VibeLobby (a product of <strong>Heitaria Swiss AG</strong>) collects, uses, and protects your data.</p>
+        <p><strong>Entity:</strong> Heitaria Swiss AG, Rigistrasse 1, 6374 Buochs, Switzerland.</p>
+        <p><strong>Contact:</strong> <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
 
-        <h4 className="font-bold text-gray-900 mt-4">1. Introduction</h4>
-        <p>VibeLobby is a product of <strong>Heitaria Swiss AG</strong> (the “Company”, “we”, “us”). We value privacy and aim to be transparent about how personal information is collected, used, shared, and retained when using VibeLobby to book travel and connect with others. By using VibeLobby, you acknowledge the practices described in this policy.</p>
-
-        <h4 className="font-bold text-gray-900 mt-4">2. Who We Are (Controller)</h4>
-        <p>VibeLobby is a product of <strong>Heitaria Swiss AG</strong> ("Heitaria"). Heitaria is the <strong>data controller</strong> for personal information processed under this policy, except where a third party acts as an independent controller (for example, airlines/hotels processing guest data for their own compliance obligations).</p>
-        <p className="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200">
-          <strong>Heitaria Swiss AG</strong><br />
-          Rigistrasse 1<br />
-          6374 Buochs<br />
-          Switzerland<br />
-          <strong>Email:</strong> <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a>
-        </p>
-
-        <h4 className="font-bold text-gray-900 mt-4">3. Information We Collect</h4>
-
-        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">A. Transactional Data (the “Booking”)</h5>
-        <ul className="list-disc pl-5 space-y-1 mt-1">
-          <li><strong>Identity and contact details:</strong> full legal name, email, phone number.</li>
-          <li><strong>Payment details:</strong> processed by a payment provider. <strong>We do not store full card numbers</strong>. We may store payment tokens and limited payment metadata (for example, last four digits, card brand, billing country) where provided by the payment provider.</li>
-          <li><strong>Travel document details (when required):</strong> passport/ID details and other traveler information required by airlines, hotels, or legal regulations.</li>
-        </ul>
-
-        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">B. Social & Vibe Data (the “Experience”)</h5>
-        <ul className="list-disc pl-5 space-y-1 mt-1">
-          <li><strong>Vibe Tags and preferences:</strong> interests selected (for example, “Techno”, “Startups”, “Yoga”).</li>
-          <li><strong>Approximate geolocation:</strong> used for Activity Density features during active check-in dates.</li>
-          <li><strong>Chat content:</strong> messages and content sent through Lobby Chat.</li>
-          <li><strong>Profile information (optional):</strong> profile photo and any optional bio/handle that is added.</li>
-        </ul>
-
-        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">C. Technical and Usage Data</h5>
-        <ul className="list-disc pl-5 space-y-1 mt-1">
-          <li><strong>Device and app data:</strong> device type, operating system, app version, browser type.</li>
-          <li><strong>Log and analytics data:</strong> IP address, approximate location inferred from IP, timestamps, pages/screens viewed, referral/utm data, and interactions.</li>
-          <li><strong>Cookies:</strong> for authentication, session management, and analytics (see Section 10).</li>
-        </ul>
-
-        <h4 className="font-bold text-gray-900 mt-4">4. How We Use Information</h4>
+        <h4 className="font-bold text-gray-900 mt-4">1. Data We Collect</h4>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Booking Fulfillment:</strong> Create, manage, and share required data with Duffel and travel providers. Provide customer support.</li>
-          <li><strong>Social Features:</strong> Calculate compatibility, generate density heatmaps (aggregated), and enable Lobby Chat.</li>
-          <li><strong>Safety:</strong> Enforce community rules and Zero-Tolerance policies.</li>
-          <li><strong>Operations:</strong> Debugging, fraud prevention, and performance monitoring.</li>
-          <li><strong>Legal:</strong> Tax, accounting, audits, and regulatory compliance.</li>
+          <li><strong>Identity Data:</strong> Name, email, wallet address (via Web3Auth), and profile photo.</li>
+          <li><strong>Booking Data:</strong> Hotel details, dates, and guests (processed via Duffel).</li>
+          <li><strong>Usage Data:</strong> Search history, "Vibe Tags" interests, and lobby chat interactions.</li>
         </ul>
 
-        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mt-2 text-xs">
-          <strong>Public Mode Note:</strong> If enabled during a stay, your profile photo and selected Vibe Tags may be shown to other verified guests in the same Digital Lobby. Heatmaps are aggregated and anonymized by default.
-        </div>
+        <h4 className="font-bold text-gray-900 mt-4">2. How We Use Your Data</h4>
+        <p>We use your data to facilitate bookings, verify your "Digital Key" for lobby access, providing "Social Forecasts" (aggregated/anonymized), and legal compliance.</p>
 
+        <h4 className="font-bold text-gray-900 mt-4">3. Data Sharing</h4>
+        <p>We share booking data with <strong>Duffel</strong> (and the respective Travel Provider) to fulfill your reservation. We do <strong>not</strong> sell your personal data to third parties.</p>
 
-        <h4 className="font-bold text-gray-900 mt-4">5. Legal Bases (EEA/UK)</h4>
-        <p>Where GDPR applies, processing is based on <strong>Contract</strong> (bookings), <strong>Legitimate Interests</strong> (security/fraud), <strong>Consent</strong> (social features), and <strong>Legal Obligation</strong>.</p>
-
-        <h4 className="font-bold text-gray-900 mt-4">6. Data Retention</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Booking records:</strong> 7 years (tax/legal).</li>
-          <li><strong>Chat logs:</strong> 30 days post-checkout, then deleted/anonymized.</li>
-          <li><strong>Vibe profile:</strong> Retained while account is active.</li>
-        </ul>
-
-        <h4 className="font-bold text-gray-900 mt-4">7. Your Rights</h4>
-        <p>Depending on your location (GDPR/CCPA), you may have rights to Access, Correction, Deletion, and Portability of your data. You can control social visibility via "Ghost Mode" settings.</p>
-
-        <h4 className="font-bold text-gray-900 mt-4">8. Children using VibeLobby</h4>
-        <p>VibeLobby is not intended for children under 13. We do not knowingly create accounts for children.</p>
-
-        <h4 className="font-bold text-gray-900 mt-4">Contact</h4>
-        <p><strong>Heitaria Swiss AG</strong><br />Email: <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
+        <h4 className="font-bold text-gray-900 mt-4">4. Your Rights (GDPR/Swiss FADP)</h4>
+        <p>You have the right to access, correct, delete, or export your data. Contact us at <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a> to exercise these rights.</p>
       </div>
     )
   },
@@ -172,90 +121,95 @@ const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; conte
 
         <h4 className="font-bold text-gray-900 mt-4">1. What Are Cookies?</h4>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Cookies:</strong> Small text files stored by your browser.</li>
-          <li><strong>Local Storage:</strong> Browser technology to store data (like Digital Keys).</li>
+          <li><strong>Cookies:</strong> Small text files stored by your browser that allow us to remember your session and settings.</li>
+          <li><strong>Local Storage:</strong> Browser technology used to store data locally on your device (such as your "Digital Key" for secure access).</li>
         </ul>
 
         <h4 className="font-bold text-gray-900 mt-4">2. Why We Use Them</h4>
-        <p>To keep services functioning, remember preferences, secure accounts, and prevent fraud.</p>
+        <p>We use these technologies to keep our Services functioning, remember your preferences, secure your account, prevent fraud, and maintain your verified booking status.</p>
 
         <h4 className="font-bold text-gray-900 mt-4">3. Types of Cookies We Use</h4>
 
         <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">A. Essential (Strictly Necessary)</h5>
-        <p>Required for operation. Examples:</p>
+        <p>These are required for the operation and security of the Services. You cannot opt out of these, as the application cannot function securely without them.</p>
         <ul className="list-disc pl-5 space-y-1 mt-1">
-          <li>Authentication (staying logged in).</li>
-          <li>Storing <strong>Digital Keys</strong> so you don't lose lobby access on refresh.</li>
-          <li>Security features (CSRF protection).</li>
+          <li><strong>Authentication:</strong> Keeps you logged in during your session.</li>
+          <li><strong>Wallet Security (Web3Auth):</strong> We use third-party infrastructure (Web3Auth/OpenLogin) to securely reconstruct your private key and manage the "Digital Key" handshake. These cookies are strictly limited to security, session management, and cryptography; they are not used for advertising or tracking.</li>
+          <li><strong>Fraud Prevention:</strong> Detects abnormal login attempts to protect your assets.</li>
+          <li><strong>CSRF Protection:</strong> Prevents cross-site forgery attacks.</li>
         </ul>
         <div className="bg-yellow-50 border border-yellow-200 p-2 rounded mt-2 text-xs">
-          <strong>Note:</strong> Clearing these removes access to active lobbies until you re-verify.
+          <strong>Note:</strong> Clearing these cookies or local storage will log you out and remove access to active lobbies until you re-verify.
         </div>
 
         <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">B. Preference (Functional)</h5>
-        <p>Remember choices like last searched city or selected Vibe Tags.</p>
+        <p>These remember your choices to improve your experience, such as your last searched city or selected Vibe Tags.</p>
 
         <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">C. Analytics (Optional)</h5>
-        <p>Used to understand usage. Where required by law, we request consent.</p>
+        <p>Used to understand how visitors interact with our website (e.g., page visit counts). These are only active if you grant consent.</p>
 
         <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">D. Marketing (Optional)</h5>
-        <p>Used to measure campaigns. Where required, we request consent.</p>
+        <p>Used to measure advertising campaigns. These are only active if you grant consent.</p>
 
-        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">E. Support / Customer Messaging (Optional)</h5>
-        <p>Used to maintain chat sessions (e.g., live chat).</p>
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">E. Support (Optional)</h5>
+        <p>Used to maintain chat sessions (e.g., customer support messengers).</p>
 
-        <h5 className="font-bold text-gray-800 mt-4 text-xs uppercase tracking-wide">Cookie List (Observed)</h5>
+        <h5 className="font-bold text-gray-800 mt-4 text-xs uppercase tracking-wide">Cookie List (Detailed)</h5>
         <div className="overflow-x-auto mt-2 border border-gray-200 rounded-lg">
           <table className="min-w-full text-xs text-left">
             <thead className="bg-gray-50 font-bold text-gray-700">
               <tr>
                 <th className="p-2 border-b">Category</th>
-                <th className="p-2 border-b">Cookie Name</th>
+                <th className="p-2 border-b">Cookie Name / Domain</th>
                 <th className="p-2 border-b">Provider</th>
                 <th className="p-2 border-b">Purpose</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               <tr>
-                <td className="p-2">Analytics</td>
-                <td className="p-2 font-mono text-[10px]">_ga</td>
-                <td className="p-2">Google (via Web3Auth)</td>
-                <td className="p-2">Users / Analytics ID</td>
+                <td className="p-2">Essential</td>
+                <td className="p-2 font-mono text-[10px]">openlogin-session, torus-works</td>
+                <td className="p-2">Web3Auth / OpenLogin</td>
+                <td className="p-2">Security: Reconstructs the private key and manages the secure login handshake.</td>
+              </tr>
+              <tr>
+                <td className="p-2">Essential</td>
+                <td className="p-2 font-mono text-[10px]">connect.sid</td>
+                <td className="p-2">VibeLobby (Server)</td>
+                <td className="p-2">Session: Maintains your verified login state on our servers.</td>
               </tr>
               <tr>
                 <td className="p-2">Analytics</td>
-                <td className="p-2 font-mono text-[10px]">_ga_DY71GQK057</td>
-                <td className="p-2">Google (GA4)</td>
-                <td className="p-2">Session state</td>
+                <td className="p-2 font-mono text-[10px]">_ga, _ga_*</td>
+                <td className="p-2">Google Analytics</td>
+                <td className="p-2">Stats: Distinct from Web3Auth, these track generic site usage if accepted.</td>
               </tr>
               <tr>
                 <td className="p-2">Marketing</td>
                 <td className="p-2 font-mono text-[10px]">_gcl_au</td>
                 <td className="p-2">Google Ads</td>
-                <td className="p-2">Ad attribution</td>
-              </tr>
-              <tr>
-                <td className="p-2">Experimentation</td>
-                <td className="p-2 font-mono text-[10px]">_vwo_uuid_v2</td>
-                <td className="p-2">VWO</td>
-                <td className="p-2">A/B Testing</td>
+                <td className="p-2">Ads: Ad attribution and conversion tracking if accepted.</td>
               </tr>
               <tr>
                 <td className="p-2">Support</td>
                 <td className="p-2 font-mono text-[10px]">crisp-client...</td>
                 <td className="p-2">Crisp</td>
-                <td className="p-2">Chat session</td>
+                <td className="p-2">Chat: Maintains your live chat history and session.</td>
               </tr>
             </tbody>
           </table>
         </div>
 
+        <p className="mt-2 text-xs text-gray-500 italic">
+          <strong>Privacy Note:</strong> We have configured our authentication provider (Web3Auth) to disable internal logging and experimentation cookies. Security cookies from *.web3auth.io or *.openlogin.com are used strictly for identity verification.
+        </p>
+
         <h4 className="font-bold text-gray-900 mt-4">4. Managing Cookies</h4>
-        <p>You can block/delete cookies in browser settings. Clearing local storage will log you out and remove Digital Keys.</p>
-        <p>Where required (EEA/UK), we provide in-app consent controls.</p>
+        <p>You can block or delete cookies in your browser settings. However, please note that clearing Local Storage or blocking Essential cookies will log you out and remove your "Digital Keys," requiring you to re-login to access your lobbies.</p>
+        <p>Where required by law (EEA/UK/Switzerland), we provide in-app controls ("Cookie Settings") allowing you to reject non-essential categories.</p>
 
         <h4 className="font-bold text-gray-900 mt-4">5. Updates</h4>
-        <p>We may update this policy. Last updated date is at the top.</p>
+        <p>We may update this policy to reflect changes in technology or legislation. The effective date is stated at the top of this page.</p>
 
         <h4 className="font-bold text-gray-900 mt-4">Contact</h4>
         <p><strong>Heitaria Swiss AG</strong><br />Email: <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
@@ -280,22 +234,22 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X size={20} />
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        {/* Scrollable Content */}
+        <div className="p-6 overflow-y-auto no-scrollbar">
           {data.content}
         </div>
 
-        {/* Footer Action */}
-        <div className="p-4 border-t border-gray-100 bg-white">
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50 sticky bottom-0 z-10">
           <button
             onClick={onClose}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-colors"
+            className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors"
           >
             Close
           </button>
