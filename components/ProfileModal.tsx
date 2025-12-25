@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera, ChevronLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileModalProps {
@@ -12,6 +12,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
     const [name, setName] = useState(user?.name || '');
     const [bio, setBio] = useState(user?.bio || '');
     const [isSaving, setIsSaving] = useState(false);
+
+    // New State for Details View
+    const [view, setView] = useState<'list' | 'details'>('list');
+    const [bookingDetails, setBookingDetails] = useState<any>(null);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSave = async () => {
@@ -38,6 +44,20 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
         const newSeed = Math.random().toString(36).substring(7);
         const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${newSeed}`;
         updateUser({ avatar: newAvatar });
+    };
+
+    const handleViewDetails = async (bookingId: string) => {
+        setLoadingDetails(true);
+        try {
+            const details = await import('../services/api').then(m => m.api.hotels.getBookingDetails(bookingId));
+            setBookingDetails(details);
+            setView('details');
+        } catch (e) {
+            console.error(e);
+            alert("Failed to load details.");
+        } finally {
+            setLoadingDetails(false);
+        }
     };
 
     const compressAvatar = (file: File): Promise<string> => {
@@ -96,214 +116,251 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="bg-gray-900 p-4 text-white flex justify-between items-center">
-                    <h2 className="font-bold text-lg flex items-center gap-2">
-                        <UserIcon size={20} /> Edit Profile
+                <div className="bg-gray-900 p-4 text-white flex justify-between items-center relative">
+                    {view === 'details' && (
+                        <button
+                            onClick={() => { setView('list'); setBookingDetails(null); }}
+                            className="absolute left-4 p-1 hover:bg-white/20 rounded-full transition-colors"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                    )}
+
+                    <h2 className="font-bold text-lg flex items-center gap-2 mx-auto">
+                        <UserIcon size={20} /> {view === 'details' ? 'Booking Details' : 'Edit Profile'}
                     </h2>
-                    <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+
+                    <button onClick={onClose} className="absolute right-4 text-white/70 hover:text-white transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
                 {/* Body */}
                 <div className="p-6">
-                    <div className="flex flex-col items-center mb-6">
 
-                        {/* Avatar Container */}
-                        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <img
-                                src={user.avatar}
-                                alt={user.name}
-                                className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
-                            />
-
-                            {/* Overlay: Upload (Default Hover) */}
-                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Camera className="text-white" size={24} />
+                    {/* DETAILS VIEW */}
+                    {view === 'details' && bookingDetails ? (
+                        <div className="space-y-4 animate-in slide-in-from-right">
+                            <div className="flex items-start gap-4 mb-4">
+                                <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl shadow-sm border border-gray-200">
+                                    🏨
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900 leading-tight">{bookingDetails.accommodation.name}</h3>
+                                    <p className="text-sm text-gray-500 mt-1">{bookingDetails.accommodation.location?.address?.city_name || 'City Center'}</p>
+                                </div>
                             </div>
 
-                            {/* Shuffle Button (Floating) */}
-                            <button
-                                onClick={handleShuffleAvatar}
-                                className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-brand-50 hover:text-brand-600 transition-colors border border-gray-200"
-                                title="Shuffle Random Avatar"
-                            >
-                                <RefreshCw size={14} />
-                            </button>
+                            <div className="text-sm text-gray-600 flex flex-col gap-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <div className="flex items-start gap-2">
+                                    <span className="shrink-0 mt-0.5">📍</span>
+                                    <span>
+                                        {bookingDetails.accommodation.location?.address?.line_1}, {bookingDetails.accommodation.location?.address?.city_name}
+                                        <br />
+                                        <span className="text-xs text-gray-400">{bookingDetails.accommodation.location?.address?.postal_code}</span>
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="shrink-0">📅</span>
+                                    <span>{new Date(bookingDetails.check_in_date).toLocaleDateString()} — {new Date(bookingDetails.check_out_date).toLocaleDateString()}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="shrink-0">🛏️</span>
+                                    <span>{bookingDetails.rooms} Room(s)</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-sm space-y-2">
+                                <div className="flex justify-between font-bold text-gray-900">
+                                    <span>Total Paid</span>
+                                    <span>{bookingDetails.total_currency} {bookingDetails.total_amount}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 pt-2 border-t border-brand-200/50 flex justify-between">
+                                    <span>Duffel Reference:</span>
+                                    <span className="font-mono">{bookingDetails.reference}</span>
+                                </div>
+                            </div>
+
+                            {bookingDetails.guests && (
+                                <div>
+                                    <h4 className="font-bold text-sm mb-2 text-gray-700">Guests</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {bookingDetails.guests.map((g: any, i: number) => (
+                                            <span key={i} className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100">
+                                                {g.given_name} {g.family_name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-
-                        {view === 'details' && bookingDetails ? (
-                            <div className="space-y-4 animate-in slide-in-from-right">
-                                <h3 className="text-xl font-bold text-gray-900">{bookingDetails.accommodation.name}</h3>
-                                <div className="text-sm text-gray-500 flex flex-col gap-1">
-                                    <span className="flex items-center gap-2">📍 {bookingDetails.accommodation.location?.address?.line_1 || bookingDetails.accommodation.location?.geographic_coordinates ? 'View on Map' : 'Address hidden'}</span>
-                                    <span className="flex items-center gap-2">📅 {new Date(bookingDetails.check_in_date).toLocaleDateString()} — {new Date(bookingDetails.check_out_date).toLocaleDateString()}</span>
-                                    <span className="flex items-center gap-2">🛏️ {bookingDetails.rooms} Room(s)</span>
-                                </div>
-
-                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm space-y-2">
-                                    <div className="flex justify-between font-bold">
-                                        <span>Total Paid</span>
-                                        <span>{bookingDetails.total_currency} {bookingDetails.total_amount}</span>
-                                    </div>
-                                    <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
-                                        Reference: {bookingDetails.reference}
-                                    </div>
-                                </div>
-
-                                {bookingDetails.guests && (
-                                    <div>
-                                        <h4 className="font-bold text-sm mb-2">Guests</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {bookingDetails.guests.map((g: any, i: number) => (
-                                                <span key={i} className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">
-                                                    {g.given_name} {g.family_name}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
+                    ) : (
+                        /* PROFILE FORM VIEW */
                         <>
-                                <div className="flex flex-col items-center mb-6">
-
-                                    {/* Avatar Container */}
-                                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                        <img
-                                            src={user.avatar}
-                                            alt={user.name}
-                                            className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
-                                        />
-
-                                        {/* Overlay: Upload (Default Hover) */}
-                                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Camera className="text-white" size={24} />
-                                        </div>
-
-                                        {/* Shuffle Button (Floating) */}
-                                        <button
-                                            onClick={handleShuffleAvatar}
-                                            className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-brand-50 hover:text-brand-600 transition-colors border border-gray-200"
-                                            title="Shuffle Random Avatar"
-                                        >
-                                            <RefreshCw size={14} />
-                                        </button>
-                                    </div>
-
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleFileSelect}
+                            <div className="flex flex-col items-center mb-6">
+                                {/* Avatar Container */}
+                                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                    <img
+                                        src={user.avatar}
+                                        alt={user.name}
+                                        className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
                                     />
 
-                                    <p className="text-xs text-gray-400 mt-3 font-mono flex items-center gap-1">
-                                        {user.walletAddress ? 'Wallet Connected' : 'Social Login'}
-                                        <span className="text-gray-300">•</span>
-                                        <span className="text-gray-500">Click image to upload</span>
-                                    </p>
+                                    {/* Overlay: Upload (Default Hover) */}
+                                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="text-white" size={24} />
+                                    </div>
+
+                                    {/* Shuffle Button (Floating) */}
+                                    <button
+                                        onClick={handleShuffleAvatar}
+                                        className="absolute bottom-0 right-0 bg-white text-gray-700 p-1.5 rounded-full shadow-md hover:bg-brand-50 hover:text-brand-600 transition-colors border border-gray-200"
+                                        title="Shuffle Random Avatar"
+                                    >
+                                        <RefreshCw size={14} />
+                                    </button>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Display Name</label>
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium"
-                                            placeholder="How should we call you?"
-                                        />
-                                        <p className="text-[10px] text-gray-400 mt-1">This is what others will see in the chat.</p>
-                                    </div>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleFileSelect}
+                                />
 
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Vibe Bio</label>
-                                        <textarea
-                                            value={bio}
-                                            onChange={(e) => setBio(e.target.value)}
-                                            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all resize-none h-24"
-                                            placeholder="What's your vibe? (e.g. 'Here for techno and tacos')"
-                                            maxLength={100}
-                                        />
-                                        <div className="text-right text-[10px] text-gray-400">{bio.length}/100</div>
-                                    </div>
+                                <p className="text-xs text-gray-400 mt-3 font-mono flex items-center gap-1">
+                                    {user.walletAddress ? 'Wallet Connected' : 'Social Login'}
+                                    <span className="text-gray-300">•</span>
+                                    <span className="text-gray-500">Click image to upload</span>
+                                </p>
+                            </div>
 
-                                    {/* DIGITAL KEYS / BOOKINGS SECTION */}
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-2">My Bookings</label>
-                                        {user.digitalKeys && user.digitalKeys.length > 0 ? (
-                                            <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                                                {user.digitalKeys.map((key, idx) => (
-                                                    <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col gap-2 text-sm">
-                                                        <div className="w-full flex justify-between items-center">
-                                                            <div>
-                                                                <div className="font-bold text-gray-800">{key.hotelName}</div>
-                                                                <div className="text-xs text-gray-500">{new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}</div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                {key.bookingId && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleViewDetails(key.bookingId!);
-                                                                        }}
-                                                                        disabled={loadingDetails}
-                                                                        className="px-2 py-1 bg-white text-brand-600 border border-brand-200 rounded text-xs hover:bg-brand-50 font-medium transition-colors"
-                                                                    >
-                                                                        {loadingDetails ? 'Loading...' : 'View Details'}
-                                                                    </button>
-                                                                )}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Display Name</label>
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                                        placeholder="How should we call you?"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">This is what others will see in the chat.</p>
+                                </div>
 
-                                                                {key.status === 'active' && key.bookingId && (
-                                                                    <button
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation();
-                                                                            if (confirm('Are you sure you want to CANCEL this booking? This checks you out immediately.')) {
-                                                                                try {
-                                                                                    await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Vibe Bio</label>
+                                    <textarea
+                                        value={bio}
+                                        onChange={(e) => setBio(e.target.value)}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 transition-all resize-none h-24"
+                                        placeholder="What's your vibe? (e.g. 'Here for techno and tacos')"
+                                        maxLength={100}
+                                    />
+                                    <div className="text-right text-[10px] text-gray-400">{bio.length}/100</div>
+                                </div>
 
-                                                                                    // Update local state to show Cancelled
-                                                                                    const updatedKeys = [...user.digitalKeys];
-                                                                                    updatedKeys[idx] = { ...key, status: 'cancelled' };
-                                                                                    updateUser({ digitalKeys: updatedKeys });
-                                                                                    alert('Booking cancelled successfully.');
-                                                                                } catch (err: any) {
-                                                                                    console.error(err);
-                                                                                    alert('Failed to cancel: ' + err.message);
-                                                                                }
+                                {/* DIGITAL KEYS / BOOKINGS SECTION */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">My Bookings</label>
+                                    {user.digitalKeys && user.digitalKeys.length > 0 ? (
+                                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                            {user.digitalKeys.map((key, idx) => (
+                                                <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col gap-2 text-sm">
+                                                    <div className="w-full flex justify-between items-center">
+                                                        <div>
+                                                            <div className="font-bold text-gray-800">{key.hotelName}</div>
+                                                            <div className="text-xs text-gray-500">{new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}</div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {key.bookingId && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleViewDetails(key.bookingId!);
+                                                                    }}
+                                                                    disabled={loadingDetails}
+                                                                    className="px-2 py-1 bg-white text-brand-600 border border-brand-200 rounded text-xs hover:bg-brand-50 font-medium transition-colors"
+                                                                >
+                                                                    {loadingDetails ? 'Loading...' : 'View Details'}
+                                                                </button>
+                                                            )}
+
+                                                            {key.status === 'active' && key.bookingId && (
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm('Are you sure you want to CANCEL this booking? This checks you out immediately.')) {
+                                                                            try {
+                                                                                await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
+
+                                                                                // Update local state to show Cancelled
+                                                                                const updatedKeys = [...user.digitalKeys];
+                                                                                updatedKeys[idx] = { ...key, status: 'cancelled' };
+                                                                                updateUser({ digitalKeys: updatedKeys });
+                                                                                alert('Booking cancelled successfully.');
+                                                                            } catch (err: any) {
+                                                                                console.error(err);
+                                                                                alert('Failed to cancel: ' + err.message);
                                                                             }
-                                                                        }}
-                                                                        className="px-2 py-1 bg-white text-red-600 border border-red-200 rounded text-xs hover:bg-red-50 font-medium transition-colors"
-                                                                    >
-                                                                        Cancel Booking
-                                                                    </button>
-                                                                )}
+                                                                        }
+                                                                    }}
+                                                                    className="px-2 py-1 bg-white text-red-600 border border-red-200 rounded text-xs hover:bg-red-50 font-medium transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            )}
 
-                                                                <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                                    key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                                        'bg-gray-200 text-gray-500'
-                                                                    }`}>
-                                                                    {key.status === 'active' ? 'Active' : key.status.charAt(0).toUpperCase() + key.status.slice(1)}
-                                                                </div>
+                                                            <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                                key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                                    'bg-gray-200 text-gray-500'
+                                                                }`}>
+                                                                {key.status === 'active' ? 'Active' : key.status.charAt(0).toUpperCase() + key.status.slice(1)}
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            onClick={handleSave}
-                                                            disabled={isSaving || !name.trim()}
-                                                            className="flex-[2] bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                                            Save Changes
-                                                        </button>
                                                     </div>
-                </div>
 
+                                                    {/* Key Collection Instructions */}
+                                                    {key.keyCollection && key.status === 'active' && (
+                                                        <div className="w-full bg-blue-50 text-blue-800 text-xs p-2 rounded border border-blue-100 flex items-start gap-2 mt-1">
+                                                            <span className="font-bold shrink-0">🔑 Key Collection:</span>
+                                                            <span>{key.keyCollection}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-400 italic bg-gray-50 p-4 rounded-xl text-center border border-dashed border-gray-200">
+                                            No active bookings found.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex-1 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <LogOut size={18} /> Sign Out
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving || !name.trim()}
+                                        className="flex-[2] bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
-                                </div >
-                                );
+        </div>
+    );
 };
 
-                                export default ProfileModal;
+export default ProfileModal;
