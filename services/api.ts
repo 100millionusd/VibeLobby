@@ -63,10 +63,15 @@ export const api = {
       localStorage.removeItem('vibe_user');
     },
 
-    updateProfile: async (userId: string, updates: { name?: string; bio?: string; avatar?: string }) => {
+    updateProfile: async (userId: string, updates: { name?: string; bio?: string; avatar?: string; digitalKeys?: any[] }) => {
       const { error } = await supabase
         .from('users')
-        .update(updates)
+        .update({
+          name: updates.name,
+          bio: updates.bio,
+          avatar: updates.avatar,
+          digital_keys: updates.digitalKeys // [NEW] Sync keys to DB (requires JSONB column 'digital_keys')
+        })
         .eq('id', userId);
 
       if (error) {

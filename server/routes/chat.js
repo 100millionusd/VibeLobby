@@ -285,4 +285,69 @@ router.delete('/conversation/:partnerId', async (req, res) => {
     }
 });
 
+// POST /api/chat/cleanup
+// Scheduled job to remove public messages from users who have checked out
+router.post('/cleanup', async (req, res) => {
+    try {
+        console.log("🧹 Starting Chat Cleanup...");
+        const now = new Date();
+
+        // 1. Get all users with digital keys
+        // We select the raw JSONB column digital_keys
+        const { data: users, error } = await supabaseAdmin
+            .from('users')
+            .select('id, digital_keys')
+            .not('digital_keys', 'is', null);
+
+        if (error) throw error;
+        if (!users) return res.json({ cleaned: 0 });
+
+        let deleteCount = 0;
+
+        // 2. Iterate users and find expired stays
+        for (const user of users) {
+            const keys = user.digital_keys || [];
+
+            // Collect Hotel IDs where stay is expired
+            const expiredHotelIds = keys
+                .filter(key => {
+                    const checkOutDate = new Date(key.checkOut);
+                    return checkOutDate < now;
+                })
+                .map(key => key.hotelId);
+
+            // Also check City stays (using 'city:CityName' convention)
+            const expiredCityChannels = keys
+                .filter(key => {
+                    const checkOutDate = new Date(key.checkOut);
+                    return checkOutDate < now && key.city;
+                })
+                .map(key => `city:${key.city}`);
+
+            const allExpiredChannels = [...expiredHotelIds, ...expiredCityChannels];
+
+            if (allExpiredChannels.length > 0) {
+                // Delete messages from this user in these channels
+                const { count } = await supabaseAdmin
+                    .from('messages')
+                    .delete({ count: 'exact' })
+                    .eq('user_id', user.id)
+                    .eq('is_private', false)
+                    .in('hotel_id', allExpiredChannels);
+
+                if (count) {
+                    console.log(`🧹 Cleaned ${count} messages for user ${user.id} in channels ${allExpiredChannels.join(', ')}`);
+                    deleteCount += count;
+                }
+            }
+        }
+
+        res.json({ success: true, deletedMessages: deleteCount });
+
+    } catch (err) {
+        console.error("Cleanup Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

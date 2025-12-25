@@ -111,6 +111,20 @@ app.get('/index.html', serveIndex);
 // match one above, send back React's index.html file.
 app.get(/.*/, serveIndex);
 
+// Schedule Daily Cleanup Job (runs every hour for demo purposes)
+setInterval(async () => {
+    try {
+        console.log("⏰ Running Scheduled Cleanup Job...");
+        const response = await fetch(`http://localhost:${port}/api/chat/cleanup`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        console.log("✅ Cleanup Result:", result);
+    } catch (err) {
+        console.error("❌ Cleanup Job Failed:", err.message);
+    }
+}, 60 * 60 * 1000); // 1 Hour
+
 app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port} (0.0.0.0)`);
 });

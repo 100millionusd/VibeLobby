@@ -212,6 +212,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setUser(updatedUser);
     localStorage.setItem('vibe_user', JSON.stringify(updatedUser));
+
+    // [NEW] Sync new key to backend immediately
+    updateUser({ digitalKeys: updatedUser.digitalKeys });
   };
 
   const updateUser = async (updates: Partial<User>) => {
@@ -227,7 +230,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await api.auth.updateProfile(user.id, {
         name: updates.name,
         bio: updates.bio,
-        avatar: updates.avatar
+        avatar: updates.avatar,
+        digitalKeys: updates.digitalKeys // [NEW] Persist keys
       });
     } catch (err) {
       console.error("Failed to persist profile update", err);
