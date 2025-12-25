@@ -145,4 +145,22 @@ router.post('/bookings/:id/cancel', async (req, res) => {
     }
 });
 
+// 7. Get Booking Details
+router.get('/bookings/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`[Backend] Fetching booking details: ${id}`);
+
+        const booking = await duffel.stays.bookings.get(id);
+
+        res.json(booking.data);
+    } catch (error) {
+        console.error('Duffel Get Booking Error:', error);
+        res.status(500).json({
+            error: error.message,
+            details: error.errors
+        });
+    }
+});
+
 export default router;

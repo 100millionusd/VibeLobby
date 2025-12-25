@@ -149,6 +149,11 @@ export const api = {
         throw new Error(err.error || "Failed to cancel booking");
       }
       return await response.json();
+    },
+    getBookingDetails: async (id: string) => {
+      const res = await fetch(`/api/hotels/bookings/${id}`);
+      if (!res.ok) throw new Error('Failed to fetch booking details');
+      return await res.json();
     }
   },
 
