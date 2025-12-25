@@ -285,8 +285,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                                         </div>
 
                                                         <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${key.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                                key.status === 'cancelled' ? 'bg-red-50 text-red-600' :
-                                                                    'bg-gray-100 text-gray-500'
+                                                            key.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                                                'bg-gray-100 text-gray-500'
                                                             }`}>
                                                             {key.status}
                                                         </div>
@@ -310,19 +310,50 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
 
                                                         {key.status === 'active' && key.bookingId && (
                                                             <button
-                                                                onClick={(e) => {
+                                                                onClick={async (e) => {
                                                                     e.stopPropagation();
-                                                                    if (confirm('Are you sure you want to CANCEL this booking?')) {
-                                                                        import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!))
-                                                                            .then(() => {
-                                                                                const updatedKeys = [...user.digitalKeys];
-                                                                                updatedKeys[idx] = { ...key, status: 'cancelled' };
-                                                                                updateUser({ digitalKeys: updatedKeys });
-                                                                            })
-                                                                            .catch(err => alert(err.message));
+                                                                    const btn = e.currentTarget;
+                                                                    const originalText = btn.innerText;
+                                                                    btn.innerText = 'Checking...';
+                                                                    btn.disabled = true;
+
+                                                                    try {
+                                                                        // 1. Fetch Policy
+                                                                        const details = await import('../services/api').then(m => m.api.hotels.getBookingDetails(key.bookingId!));
+
+                                                                        // 2. Calculate Refund
+                                                                        let refundText = "an unknown amount";
+                                                                        if (details.cancellation_timeline && Array.isArray(details.cancellation_timeline)) {
+                                                                            const now = new Date();
+                                                                            // Find the explicit rule that applies right now
+                                                                            const rule = details.cancellation_timeline.find((r: any) => new Date(r.before) > now);
+
+                                                                            if (rule) {
+                                                                                refundText = `${rule.currency} ${rule.refund_amount}`;
+                                                                            } else {
+                                                                                // If we are past the last 'before' date, usually it's non-refundable or 0
+                                                                                refundText = `${details.total_currency} 0.00 (Non-Refundable)`;
+                                                                            }
+                                                                        }
+
+                                                                        // 3. Confirm with Details
+                                                                        if (confirm(`⚠ REFUND WARNING ⚠\n\nBased on the cancellation policy, if you cancel now you will receive: ${refundText}.\n\nThis action cannot be undone. Are you sure?`)) {
+                                                                            await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
+
+                                                                            const updatedKeys = [...user.digitalKeys];
+                                                                            updatedKeys[idx] = { ...key, status: 'cancelled' };
+                                                                            updateUser({ digitalKeys: updatedKeys });
+                                                                            alert('Booking cancelled.');
+                                                                        }
+                                                                    } catch (err: any) {
+                                                                        console.error(err);
+                                                                        alert('Failed to check policy: ' + err.message);
+                                                                    } finally {
+                                                                        btn.innerText = originalText;
+                                                                        btn.disabled = false;
                                                                     }
                                                                 }}
-                                                                className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors font-medium z-10"
+                                                                className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors font-medium z-10 disabled:opacity-50"
                                                             >
                                                                 Cancel Booking
                                                             </button>
