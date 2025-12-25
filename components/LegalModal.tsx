@@ -201,9 +201,61 @@ const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; conte
         <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">D. Marketing (Optional)</h5>
         <p>Used to measure campaigns. Where required, we request consent.</p>
 
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">E. Support / Customer Messaging (Optional)</h5>
+        <p>Used to maintain chat sessions (e.g., live chat).</p>
+
+        <h5 className="font-bold text-gray-800 mt-4 text-xs uppercase tracking-wide">Cookie List (Observed)</h5>
+        <div className="overflow-x-auto mt-2 border border-gray-200 rounded-lg">
+          <table className="min-w-full text-xs text-left">
+            <thead className="bg-gray-50 font-bold text-gray-700">
+              <tr>
+                <th className="p-2 border-b">Category</th>
+                <th className="p-2 border-b">Cookie Name</th>
+                <th className="p-2 border-b">Provider</th>
+                <th className="p-2 border-b">Purpose</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <tr>
+                <td className="p-2">Analytics</td>
+                <td className="p-2 font-mono text-[10px]">_ga</td>
+                <td className="p-2">Google (via Web3Auth)</td>
+                <td className="p-2">Users / Analytics ID</td>
+              </tr>
+              <tr>
+                <td className="p-2">Analytics</td>
+                <td className="p-2 font-mono text-[10px]">_ga_DY71GQK057</td>
+                <td className="p-2">Google (GA4)</td>
+                <td className="p-2">Session state</td>
+              </tr>
+              <tr>
+                <td className="p-2">Marketing</td>
+                <td className="p-2 font-mono text-[10px]">_gcl_au</td>
+                <td className="p-2">Google Ads</td>
+                <td className="p-2">Ad attribution</td>
+              </tr>
+              <tr>
+                <td className="p-2">Experimentation</td>
+                <td className="p-2 font-mono text-[10px]">_vwo_uuid_v2</td>
+                <td className="p-2">VWO</td>
+                <td className="p-2">A/B Testing</td>
+              </tr>
+              <tr>
+                <td className="p-2">Support</td>
+                <td className="p-2 font-mono text-[10px]">crisp-client...</td>
+                <td className="p-2">Crisp</td>
+                <td className="p-2">Chat session</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <h4 className="font-bold text-gray-900 mt-4">4. Managing Cookies</h4>
         <p>You can block/delete cookies in browser settings. Clearing local storage will log you out and remove Digital Keys.</p>
         <p>Where required (EEA/UK), we provide in-app consent controls.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">5. Updates</h4>
+        <p>We may update this policy. Last updated date is at the top.</p>
 
         <h4 className="font-bold text-gray-900 mt-4">Contact</h4>
         <p><strong>Heitaria Swiss AG</strong><br />Email: <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
