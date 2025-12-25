@@ -14,22 +14,77 @@ const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; conte
     icon: Shield,
     content: (
       <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
-        <p><strong>Effective Date:</strong> October 24, 2023</p>
-        <p>At VibeLobby, we prioritize the protection of your data. This Privacy Policy outlines how we collect, use, and safeguard your information when you use our social-first booking platform.</p>
-        
-        <h4 className="font-bold text-gray-900 mt-4">1. Information We Collect</h4>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Identity Data:</strong> Name and email address when you make a booking.</li>
-          <li><strong>Location Data:</strong> GPS coordinates (latitude/longitude) ONLY when you explicitly use the "Verify Location" feature to join a lobby. We do not track your location in the background.</li>
-          <li><strong>Booking Data:</strong> Hotel details, dates, and payment confirmation references provided via our partners (Duffel).</li>
-          <li><strong>Usage Data:</strong> Search queries and "vibe" preferences to improve our AI recommendations.</li>
+        <p><strong>Last Updated:</strong> December 25, 2025</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">1. Introduction</h4>
+        <p>VibeLobby is a product of <strong>Heitaria Swiss AG</strong> (the “Company”, “we”, “us”). We value privacy and aim to be transparent about how personal information is collected, used, shared, and retained when using VibeLobby to book travel and connect with others. By using VibeLobby, you acknowledge the practices described in this policy.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">2. Who We Are (Controller)</h4>
+        <p>VibeLobby is a product of <strong>Heitaria Swiss AG</strong> ("Heitaria"). Heitaria is the <strong>data controller</strong> for personal information processed under this policy, except where a third party acts as an independent controller (for example, airlines/hotels processing guest data for their own compliance obligations).</p>
+        <p className="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200">
+          <strong>Heitaria Swiss AG</strong><br />
+          Rigistrasse 1<br />
+          6374 Buochs<br />
+          Switzerland<br />
+          <strong>Email:</strong> <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a>
+        </p>
+
+        <h4 className="font-bold text-gray-900 mt-4">3. Information We Collect</h4>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">A. Transactional Data (the “Booking”)</h5>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li><strong>Identity and contact details:</strong> full legal name, email, phone number.</li>
+          <li><strong>Payment details:</strong> processed by a payment provider. <strong>We do not store full card numbers</strong>. We may store payment tokens and limited payment metadata (for example, last four digits, card brand, billing country) where provided by the payment provider.</li>
+          <li><strong>Travel document details (when required):</strong> passport/ID details and other traveler information required by airlines, hotels, or legal regulations.</li>
         </ul>
 
-        <h4 className="font-bold text-gray-900 mt-4">2. How We Use Your Data</h4>
-        <p>We use your data to facilitate hotel bookings, verify your physical presence for secure chat access, and generate AI-powered social forecasts using Google Gemini.</p>
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">B. Social & Vibe Data (the “Experience”)</h5>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li><strong>Vibe Tags and preferences:</strong> interests selected (for example, “Techno”, “Startups”, “Yoga”).</li>
+          <li><strong>Approximate geolocation:</strong> used for Activity Density features during active check-in dates.</li>
+          <li><strong>Chat content:</strong> messages and content sent through Lobby Chat.</li>
+          <li><strong>Profile information (optional):</strong> profile photo and any optional bio/handle that is added.</li>
+        </ul>
 
-        <h4 className="font-bold text-gray-900 mt-4">3. Third-Party Sharing</h4>
-        <p>We share necessary transaction data with <strong>Duffel</strong> (our booking engine provider) to process your reservation. We do not sell your personal data to advertisers.</p>
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">C. Technical and Usage Data</h5>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li><strong>Device and app data:</strong> device type, operating system, app version, browser type.</li>
+          <li><strong>Log and analytics data:</strong> IP address, approximate location inferred from IP, timestamps, pages/screens viewed, referral/utm data, and interactions.</li>
+          <li><strong>Cookies:</strong> for authentication, session management, and analytics (see Section 10).</li>
+        </ul>
+
+        <h4 className="font-bold text-gray-900 mt-4">4. How We Use Information</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Booking Fulfillment:</strong> Create, manage, and share required data with Duffel and travel providers. Provide customer support.</li>
+          <li><strong>Social Features:</strong> Calculate compatibility, generate density heatmaps (aggregated), and enable Lobby Chat.</li>
+          <li><strong>Safety:</strong> Enforce community rules and Zero-Tolerance policies.</li>
+          <li><strong>Operations:</strong> Debugging, fraud prevention, and performance monitoring.</li>
+          <li><strong>Legal:</strong> Tax, accounting, audits, and regulatory compliance.</li>
+        </ul>
+
+        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mt-2 text-xs">
+          <strong>Public Mode Note:</strong> If enabled during a stay, your profile photo and selected Vibe Tags may be shown to other verified guests in the same Digital Lobby. Heatmaps are aggregated and anonymized by default.
+        </div>
+
+
+        <h4 className="font-bold text-gray-900 mt-4">5. Legal Bases (EEA/UK)</h4>
+        <p>Where GDPR applies, processing is based on <strong>Contract</strong> (bookings), <strong>Legitimate Interests</strong> (security/fraud), <strong>Consent</strong> (social features), and <strong>Legal Obligation</strong>.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">6. Data Retention</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Booking records:</strong> 7 years (tax/legal).</li>
+          <li><strong>Chat logs:</strong> 30 days post-checkout, then deleted/anonymized.</li>
+          <li><strong>Vibe profile:</strong> Retained while account is active.</li>
+        </ul>
+
+        <h4 className="font-bold text-gray-900 mt-4">7. Your Rights</h4>
+        <p>Depending on your location (GDPR/CCPA), you may have rights to Access, Correction, Deletion, and Portability of your data. You can control social visibility via "Ghost Mode" settings.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">8. Children using VibeLobby</h4>
+        <p>VibeLobby is not intended for children under 13. We do not knowingly create accounts for children.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">Contact</h4>
+        <p><strong>Heitaria Swiss AG</strong><br />Email: <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
       </div>
     )
   },
@@ -82,15 +137,15 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative flex flex-col max-h-[85vh]">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
           <div className="flex items-center gap-2 text-brand-600">
             <Icon size={24} />
             <h2 className="font-bold text-xl text-gray-900">{data.title}</h2>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-900"
           >
             <X size={20} />
@@ -99,12 +154,12 @@ const LegalModal: React.FC<LegalModalProps> = ({ page, onClose }) => {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-           {data.content}
+          {data.content}
         </div>
 
         {/* Footer Action */}
         <div className="p-4 border-t border-gray-100 bg-white">
-          <button 
+          <button
             onClick={onClose}
             className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-colors"
           >
