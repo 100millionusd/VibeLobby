@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera, ChevronLeft, CheckCircle, Calendar } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera, ChevronLeft, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileModalProps {
@@ -266,68 +266,69 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                     <label className="block text-sm font-bold text-gray-700 mb-2">My Bookings</label>
                                     {user.digitalKeys && user.digitalKeys.length > 0 ? (
                                         <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                                            {user.digitalKeys.map((key, idx) => <div
-                                                key={idx}
-                                                onClick={() => key.bookingId && handleViewDetails(key.bookingId)}
-                                                className={`bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-3 text-sm transition-all shadow-sm ${key.bookingId ? 'cursor-pointer hover:shadow-md hover:border-brand-300 group' : ''}`}
-                                            >
-                                                <div className="w-full flex justify-between items-start">
-                                                    <div className="flex-1">
-                                                        <div className="font-bold text-gray-900 text-base group-hover:text-brand-700 transition-colors flex items-center gap-2">
-                                                            {key.hotelName}
-                                                            {key.bookingId && <ChevronLeft size={16} className="rotate-180 text-gray-300 group-hover:text-brand-500 transition-colors" />}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                                                            <Calendar size={12} />
-                                                            {new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${key.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                        key.status === 'cancelled' ? 'bg-red-50 text-red-600' :
-                                                            'bg-gray-100 text-gray-500'
-                                                        }`}>
-                                                        {key.status}
-                                                    </div>
-                                                </div>
-
-                                                {/* Actions Row */}
-                                                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-
-                                                    {/* Type / Instructions */}
-                                                    <div className="flex-1">
-                                                        {key.keyCollection && key.status === 'active' ? (
-                                                            <div className="text-blue-700 text-xs flex items-center gap-1 bg-blue-50 px-2 py-1 rounded w-fit">
-                                                                <span>🔑 {key.keyCollection}</span>
+                                            {user.digitalKeys.map((key, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => key.bookingId && handleViewDetails(key.bookingId)}
+                                                    className={`bg-white p-4 rounded-xl border border-gray-200 flex flex-col gap-3 text-sm transition-all shadow-sm ${key.bookingId ? 'cursor-pointer hover:shadow-md hover:border-brand-300 group' : ''}`}
+                                                >
+                                                    <div className="w-full flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <div className="font-bold text-gray-900 text-base group-hover:text-brand-700 transition-colors flex items-center gap-2">
+                                                                {key.hotelName}
+                                                                {key.bookingId && <ChevronLeft size={16} className="rotate-180 text-gray-300 group-hover:text-brand-500 transition-colors" />}
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-xs text-brand-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                View Details &rarr;
-                                                            </span>
+                                                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                                                <Calendar size={12} />
+                                                                {new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${key.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                                key.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                                                    'bg-gray-100 text-gray-500'
+                                                            }`}>
+                                                            {key.status}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions Row */}
+                                                    <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+
+                                                        {/* Type / Instructions */}
+                                                        <div className="flex-1">
+                                                            {key.keyCollection && key.status === 'active' ? (
+                                                                <div className="text-blue-700 text-xs flex items-center gap-1 bg-blue-50 px-2 py-1 rounded w-fit">
+                                                                    <span>🔑 {key.keyCollection}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-brand-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    View Details &rarr;
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {key.status === 'active' && key.bookingId && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (confirm('Are you sure you want to CANCEL this booking?')) {
+                                                                        import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!))
+                                                                            .then(() => {
+                                                                                const updatedKeys = [...user.digitalKeys];
+                                                                                updatedKeys[idx] = { ...key, status: 'cancelled' };
+                                                                                updateUser({ digitalKeys: updatedKeys });
+                                                                            })
+                                                                            .catch(err => alert(err.message));
+                                                                    }
+                                                                }}
+                                                                className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors font-medium z-10"
+                                                            >
+                                                                Cancel Booking
+                                                            </button>
                                                         )}
                                                     </div>
-
-                                                    {key.status === 'active' && key.bookingId && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                if (confirm('Are you sure you want to CANCEL this booking?')) {
-                                                                    import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!))
-                                                                        .then(() => {
-                                                                            const updatedKeys = [...user.digitalKeys];
-                                                                            updatedKeys[idx] = { ...key, status: 'cancelled' };
-                                                                            updateUser({ digitalKeys: updatedKeys });
-                                                                        })
-                                                                        .catch(err => alert(err.message));
-                                                                }
-                                                            }}
-                                                            className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors font-medium z-10"
-                                                        >
-                                                            Cancel Booking
-                                                        </button>
-                                                    )}
                                                 </div>
-                                            </div>
                                             ))}
                                         </div>
                                     ) : (
