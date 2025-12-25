@@ -231,7 +231,7 @@ const App: React.FC = () => {
         onClose={() => setActiveNotification(null)}
       />
 
-      <CookieBanner />
+      <CookieBanner onOpenLegal={(page) => setLegalPage(page)} />
 
       {/* Navbar */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 flex justify-between items-center">
