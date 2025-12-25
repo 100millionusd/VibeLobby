@@ -93,20 +93,64 @@ const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; conte
     icon: FileText,
     content: (
       <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
-        <p><strong>Last Updated:</strong> October 24, 2023</p>
-        <p>Welcome to VibeLobby. By accessing our platform, you agree to these Terms of Service.</p>
+        <p><strong>Last Updated:</strong> December 25, 2025</p>
+        <p>Welcome to VibeLobby (the “Platform”). These Terms of Service (“Terms”) govern access to and use of the Platform.</p>
+        <p>VibeLobby is a product of <strong>Heitaria Swiss AG</strong> (“Heitaria”, “we”, “us”). By accessing or using the Platform, you agree to these Terms.</p>
 
-        <h4 className="font-bold text-gray-900 mt-4">1. Our Service</h4>
-        <p>VibeLobby acts as an Online Travel Agency (OTA) and social platform. We facilitate bookings through third-party providers. We are not a hotel operator and are not responsible for the on-site experience provided by the accommodation.</p>
+        <p className="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200">
+          <strong>Heitaria Swiss AG (VibeLobby)</strong><br />
+          Rigistrasse 1<br />
+          6374 Buochs<br />
+          Switzerland<br />
+          <strong>Email:</strong> <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a>
+        </p>
 
-        <h4 className="font-bold text-gray-900 mt-4">2. User Conduct</h4>
-        <p>The "Lobby Chat" feature is a privilege. We operate a zero-tolerance policy for harassment, hate speech, or illegal solicitation. Violation of these rules will result in an immediate ban and revocation of your Digital Key.</p>
+        <h4 className="font-bold text-gray-900 mt-4">1. Definitions</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>“Booking”:</strong> reservation for travel services made through the Platform.</li>
+          <li><strong>“Travel Provider”:</strong> airline, hotel, or service provider delivering the service.</li>
+          <li><strong>“Digital Lobby”:</strong> in-app social space associated with a specific stay.</li>
+          <li><strong>“Digital Key”:</strong> credential/token used to participate in a Digital Lobby.</li>
+        </ul>
 
-        <h4 className="font-bold text-gray-900 mt-4">3. Bookings & Cancellations</h4>
-        <p>All bookings are processed securely via the Duffel API. Cancellation policies (Refundable vs. Non-Refundable) are specific to the rate selected at checkout. VibeLobby honors the policy dictated by the hotel provider.</p>
+        <h4 className="font-bold text-gray-900 mt-4">2. Our Service</h4>
+        <p>We operate as an OTA and social platform, facilitating bookings via Duffel and connecting travelers. We are <strong>not</strong> a hotel or tour operator. Travel Providers control the on-site experience and their own terms apply.</p>
 
-        <h4 className="font-bold text-gray-900 mt-4">4. Liability</h4>
-        <p>VibeLobby is provided "as is". We make no warranties regarding the accuracy of AI-generated "Social Forecasts" as these are predictive in nature.</p>
+        <h4 className="font-bold text-gray-900 mt-4">3. Eligibility and Account</h4>
+        <p>You must be 18+ and have legal capacity. You are responsible for account security and providing accurate traveler identity details.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">4. Bookings, Payments, and Taxes</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Bookings:</strong> You authorize us to share data with Duffel/Providers to complete reservations.</li>
+          <li><strong>Payments:</strong> Processed by third-party providers. We don't store full card numbers.</li>
+          <li><strong>Traveler Requirements:</strong> You are responsible for passports, visas, and health requirements.</li>
+        </ul>
+
+        <h4 className="font-bold text-gray-900 mt-4">5. Cancellations, Changes, and Refunds</h4>
+        <p><strong>Provider Policies Control:</strong> Refundability is determined by the rate/Provider. We honor their policies.</p>
+        <p>Disputes/Chargebacks may result in account suspension during investigation.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">6. Social Features & Conduct (The "Vibe")</h4>
+        <p>Social features (Lobby Chat, Activity Density) are optional.</p>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">Community Rules (Zero Tolerance)</h5>
+        <div className="bg-red-50 border border-red-200 p-3 rounded-lg text-xs text-red-800">
+          You agree NOT to: harass, bully, post hate speech, solicit illegal services, or share explicit content. Violations result in <strong>immediate ban</strong> and revocation of Digital Keys.
+        </div>
+
+        <p className="mt-2">If you enable <strong>Public Mode</strong>, limited profile info (Photo, Vibe Tags) is visible to verify guests in the same lobby.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">7. User Content</h4>
+        <p>You retain ownership of your content but grant us a license to host/display it for platform operation. You must have rights to what you post.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">8. AI Features</h4>
+        <p>AI "Social Forecasts" are informational/predictive only. Do not rely on them for safety-critical decisions.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">9. Disclaimers & Liability</h4>
+        <p>The Platform is provided "as is". Heitaria is not liable for indirect damages or disputes with Travel Providers. Liability is limited to the booking amount paid in the last 12 months (where permitted by law).</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">10. Governing Law</h4>
+        <p>Terms are governed by the laws of <strong>Switzerland</strong>. Exclusive venue: Nidwalden, Switzerland.</p>
       </div>
     )
   },
@@ -115,16 +159,54 @@ const CONTENT: Record<LegalPage, { title: string; icon: React.ElementType; conte
     icon: Cookie,
     content: (
       <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
-        <p>We use cookies and local storage technologies to enhance your experience.</p>
+        <p><strong>Last Updated:</strong> December 25, 2025</p>
+        <p>This Cookie Policy explains how VibeLobby (a product of <strong>Heitaria Swiss AG</strong>) uses cookies and similar technologies (including local storage) on vibelobby.com and in our web application (the “Services”).</p>
 
-        <h4 className="font-bold text-gray-900 mt-4">1. Essential Cookies</h4>
-        <p>These are necessary for the app to function. For example, we use <code>localStorage</code> to keep you logged in and to store your "Digital Keys" (verified bookings) so you don't lose chat access on page refresh.</p>
+        <p className="mt-2 text-xs bg-gray-100 p-2 rounded border border-gray-200">
+          <strong>Heitaria Swiss AG (VibeLobby)</strong><br />
+          Rigistrasse 1<br />
+          6374 Buochs<br />
+          Switzerland<br />
+          <strong>Email:</strong> <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a>
+        </p>
 
-        <h4 className="font-bold text-gray-900 mt-4">2. Preference Cookies</h4>
-        <p>We store your last searched city and interest tags to provide faster results upon your return.</p>
+        <h4 className="font-bold text-gray-900 mt-4">1. What Are Cookies?</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Cookies:</strong> Small text files stored by your browser.</li>
+          <li><strong>Local Storage:</strong> Browser technology to store data (like Digital Keys).</li>
+        </ul>
 
-        <h4 className="font-bold text-gray-900 mt-4">3. Managing Cookies</h4>
-        <p>You can clear your browser cache or local storage at any time to reset your session. Note that this will log you out and remove access to active lobbies until you re-verify.</p>
+        <h4 className="font-bold text-gray-900 mt-4">2. Why We Use Them</h4>
+        <p>To keep services functioning, remember preferences, secure accounts, and prevent fraud.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">3. Types of Cookies We Use</h4>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">A. Essential (Strictly Necessary)</h5>
+        <p>Required for operation. Examples:</p>
+        <ul className="list-disc pl-5 space-y-1 mt-1">
+          <li>Authentication (staying logged in).</li>
+          <li>Storing <strong>Digital Keys</strong> so you don't lose lobby access on refresh.</li>
+          <li>Security features (CSRF protection).</li>
+        </ul>
+        <div className="bg-yellow-50 border border-yellow-200 p-2 rounded mt-2 text-xs">
+          <strong>Note:</strong> Clearing these removes access to active lobbies until you re-verify.
+        </div>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">B. Preference (Functional)</h5>
+        <p>Remember choices like last searched city or selected Vibe Tags.</p>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">C. Analytics (Optional)</h5>
+        <p>Used to understand usage. Where required by law, we request consent.</p>
+
+        <h5 className="font-bold text-gray-800 mt-2 text-xs uppercase tracking-wide">D. Marketing (Optional)</h5>
+        <p>Used to measure campaigns. Where required, we request consent.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">4. Managing Cookies</h4>
+        <p>You can block/delete cookies in browser settings. Clearing local storage will log you out and remove Digital Keys.</p>
+        <p>Where required (EEA/UK), we provide in-app consent controls.</p>
+
+        <h4 className="font-bold text-gray-900 mt-4">Contact</h4>
+        <p><strong>Heitaria Swiss AG</strong><br />Email: <a href="mailto:support@vibelobby.com" className="text-brand-600 hover:underline">support@vibelobby.com</a></p>
       </div>
     )
   }
