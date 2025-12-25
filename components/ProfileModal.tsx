@@ -178,45 +178,54 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                             {user.digitalKeys && user.digitalKeys.length > 0 ? (
                                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                                     {user.digitalKeys.map((key, idx) => (
-                                        <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center text-sm">
-                                            <div>
-                                                <div className="font-bold text-gray-800">{key.hotelName}</div>
-                                                <div className="text-xs text-gray-500">{new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}</div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
+                                        <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex flex-col gap-2 text-sm">
+                                            <div className="w-full flex justify-between items-center">
+                                                <div>
+                                                    <div className="font-bold text-gray-800">{key.hotelName}</div>
+                                                    <div className="text-xs text-gray-500">{new Date(key.checkIn).toLocaleDateString()} - {new Date(key.checkOut).toLocaleDateString()}</div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
 
-                                                {key.status === 'active' && key.bookingId && (
-                                                    <button
-                                                        onClick={async (e) => {
-                                                            e.stopPropagation();
-                                                            if (confirm('Are you sure you want to CANCEL this booking? This checks you out immediately.')) {
-                                                                try {
-                                                                    await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
+                                                    {key.status === 'active' && key.bookingId && (
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (confirm('Are you sure you want to CANCEL this booking? This checks you out immediately.')) {
+                                                                    try {
+                                                                        await import('../services/api').then(m => m.api.hotels.cancelBooking(key.bookingId!));
 
-                                                                    // Update local state to show Cancelled
-                                                                    const updatedKeys = [...user.digitalKeys];
-                                                                    updatedKeys[idx] = { ...key, status: 'cancelled' };
-                                                                    updateUser({ digitalKeys: updatedKeys });
-                                                                    alert('Booking cancelled successfully.');
-                                                                } catch (err: any) {
-                                                                    console.error(err);
-                                                                    alert('Failed to cancel: ' + err.message);
+                                                                        // Update local state to show Cancelled
+                                                                        const updatedKeys = [...user.digitalKeys];
+                                                                        updatedKeys[idx] = { ...key, status: 'cancelled' };
+                                                                        updateUser({ digitalKeys: updatedKeys });
+                                                                        alert('Booking cancelled successfully.');
+                                                                    } catch (err: any) {
+                                                                        console.error(err);
+                                                                        alert('Failed to cancel: ' + err.message);
+                                                                    }
                                                                 }
-                                                            }
-                                                        }}
-                                                        className="px-2 py-1 bg-white text-red-600 border border-red-200 rounded text-xs hover:bg-red-50 font-medium transition-colors"
-                                                    >
-                                                        Cancel Booking
-                                                    </button>
-                                                )}
+                                                            }}
+                                                            className="px-2 py-1 bg-white text-red-600 border border-red-200 rounded text-xs hover:bg-red-50 font-medium transition-colors"
+                                                        >
+                                                            Cancel Booking
+                                                        </button>
+                                                    )}
 
-                                                <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                    key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                                        'bg-gray-200 text-gray-500'
-                                                    }`}>
-                                                    {key.status === 'active' ? 'Active' : key.status.charAt(0).toUpperCase() + key.status.slice(1)}
+                                                    <div className={`px-2 py-1 rounded text-xs font-bold ${key.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                        key.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                            'bg-gray-200 text-gray-500'
+                                                        }`}>
+                                                        {key.status === 'active' ? 'Active' : key.status.charAt(0).toUpperCase() + key.status.slice(1)}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            {/* Key Collection Instructions */}
+                                            {key.keyCollection && key.status === 'active' && (
+                                                <div className="w-full bg-blue-50 text-blue-800 text-xs p-2 rounded border border-blue-100 flex items-start gap-2">
+                                                    <span className="font-bold shrink-0">🔑 Key Collection:</span>
+                                                    <span>{key.keyCollection}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

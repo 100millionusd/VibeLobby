@@ -23,8 +23,9 @@ export interface DigitalKey {
   checkOut: string; // ISO Date String
   bookingReference: string;
   bookingId?: string; // [NEW] Duffel Booking ID (bok_...) for cancellation
-  status: 'active' | 'future' | 'expired' | 'cancelled'; // [NEW] Added cancelled status
-  city: string; // [NEW] For City Chat
+  status: 'active' | 'future' | 'expired' | 'cancelled';
+  city: string;
+  keyCollection?: string; // [NEW] Check-in instructions
 }
 
 export interface User {
@@ -61,6 +62,10 @@ export interface Hotel {
   rating: number;
   amenities: string[];
   coordinates: Coordinates;
+  checkInTime?: string; // e.g. "15:00"
+  checkOutTime?: string; // e.g. "11:00"
+  reviewScore?: number; // 1-10
+  reviewCount?: number;
 }
 
 export interface Booking {
@@ -137,7 +142,8 @@ export interface BookingConfirmationResponse {
     hotel: {
       id: string;
       name: string;
-      city: string; // [NEW]
+      city: string;
+      key_collection?: { instructions: string }; // [NEW]
     };
     room: {
       name: string;

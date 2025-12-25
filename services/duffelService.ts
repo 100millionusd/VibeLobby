@@ -175,7 +175,8 @@ export const duffelService = {
     guest: GuestDetails,
     checkInDate: Date,
     checkOutDate: Date,
-    hotel: ScoredHotel
+    hotel: ScoredHotel,
+    userId?: string
   ): Promise<BookingConfirmationResponse> => {
 
     // Call Booking Endpoint (which now uses type: 'balance')
@@ -193,6 +194,7 @@ export const duffelService = {
         }],
         email: guest.email,
         phoneNumber: guest.phoneNumber || '+16505550100', // Default if missing
+        metadata: { userId } // [NEW] Pass Metadata
         // No paymentToken needed here because we paid via Intent -> Balance
       })
     });
@@ -218,6 +220,7 @@ export const duffelService = {
           id: hotel.id,
           name: hotel.name,
           city: hotel.city,
+          key_collection: booking.accommodation?.key_collection // [NEW]
         },
         room: {
           name: "Confirmed Room",
@@ -312,6 +315,10 @@ export const duffelService = {
         lat: offer.accommodation.location?.geographic_coordinates?.latitude || 0,
         lng: offer.accommodation.location?.geographic_coordinates?.longitude || 0
       },
+      checkInTime: offer.accommodation.check_in_information?.check_in_after_time,
+      checkOutTime: offer.accommodation.check_in_information?.check_out_before_time,
+      reviewScore: offer.accommodation.review_score,
+      reviewCount: offer.accommodation.review_count,
       vibeScore: vibeScore,
       matchingGuestCount: Math.floor(guestCount * 0.6), // 60% match
       totalGuestCount: guestCount,

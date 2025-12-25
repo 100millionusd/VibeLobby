@@ -200,7 +200,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       bookingReference: booking_reference,
       bookingId: data.booking_id, // [NEW]
       status: 'active',
-      city: hotel.city
+      city: hotel.city,
+      keyCollection: hotel.key_collection?.instructions // [NEW]
     };
 
     // Promote guest to verified user so session persists

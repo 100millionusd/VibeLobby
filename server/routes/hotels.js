@@ -71,7 +71,7 @@ router.post('/quote', async (req, res) => {
 // 4. Create a Booking
 router.post('/book', async (req, res) => {
     try {
-        const { quoteId, guests, email, phoneNumber, paymentToken } = req.body;
+        const { quoteId, guests, email, phoneNumber, paymentToken, metadata } = req.body;
 
 
 
@@ -81,7 +81,8 @@ router.post('/book', async (req, res) => {
             quote_id: quoteId,
             guests: guests,
             email: email,
-            phone_number: phoneNumber
+            phone_number: phoneNumber,
+            metadata: metadata || {} // [NEW] Include Metadata
             // payment: { type: "balance" } // Removing explicit payment to rely on default/account setting
         };
 

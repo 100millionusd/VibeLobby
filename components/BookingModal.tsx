@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScoredHotel, RoomOffer, GuestDetails } from '../types';
-import { X, Calendar, CheckCircle, ShieldCheck, ArrowRight, Bed, Users, CreditCard, Loader2, ChevronLeft, Lock, AlertCircle } from 'lucide-react';
+import { X, Calendar, CheckCircle, ShieldCheck, ArrowRight, Bed, Users, CreditCard, Loader2, ChevronLeft, Lock, AlertCircle, Clock } from 'lucide-react';
 import { duffelService } from '../services/duffelService';
 import { useAuth } from '../contexts/AuthContext';
 import { getEnv } from '../utils/env';
@@ -21,7 +21,7 @@ interface BookingModalProps {
 type BookingStep = 'search' | 'selection' | 'details' | 'payment' | 'confirmed';
 
 const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchParams, onClose, onConfirm }) => {
-  const { grantDigitalKey } = useAuth();
+  const { grantDigitalKey, user } = useAuth();
   const [step, setStep] = useState<BookingStep>('search');
 
   // Data State
@@ -37,6 +37,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
   // Duffel Component State
   const duffelContainerRef = useRef<HTMLDivElement>(null);
   const [duffelInstance, setDuffelInstance] = useState<any>(null);
+  const [quote, setQuote] = useState<any>(null); // [NEW] Store Quote for Price Transparency
 
   // 1. On Mount: Simulate Searching Availability via Duffel
   useEffect(() => {
@@ -121,10 +122,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
   };
 
   // Handler: Submit Details & Move to Payment
-  const handleSubmitDetails = (e: React.FormEvent) => {
+  const handleSubmitDetails = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (guestDetails.firstName && guestDetails.email) {
-      setStep('payment');
+    if (guestDetails.firstName && guestDetails.email && selectedOffer) {
+      setIsLoading(true);
+      try {
+        // [NEW] Create Quote immediately to lock price/check taxes
+        const q = await duffelService.createQuote(selectedOffer.id);
+        setQuote(q);
+        setStep('payment');
+      } catch (err: any) {
+        console.error("Quote Creation Failed", err);
+        setErrorMsg("Failed to lock in this rate. It may be no longer available.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -139,10 +151,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
     const checkOut = searchParams.checkOut;
 
     try {
-      // 1. Create Quote to get Final Price and ID
-      console.log("Creating Quote...");
-      const quote = await duffelService.createQuote(selectedOffer.id);
-      console.log("Quote Created:", quote.id, quote.total_amount, quote.total_currency);
+      if (!quote) throw new Error("Booking Session Expired. Please restart.");
+
+      // 1. (Already Done) Quote Created in previous step
+      console.log("Using Existing Quote:", quote.id, quote.total_amount);
 
       // 2. Create Payment Intent (Server-Side)
       // SKIPPED: Duffel Payments is unavailable in this account's region (Sweden).
@@ -160,7 +172,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
         guestDetails,
         checkIn,
         checkOut,
-        hotel
+        hotel,
+        user?.id
       );
 
       if (confirmation.success) {
@@ -226,9 +239,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
                 <img src={hotel.images[0]} className="w-16 h-16 rounded-lg object-cover" alt="" />
                 <div>
                   <h3 className="font-bold text-gray-900">{hotel.name}</h3>
-                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                    <Calendar size={12} className="mr-1" /> Oct 14 - Oct 17 (3 Nights)
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <Calendar size={12} className="mr-1" />
+                      {searchParams.checkIn.toLocaleDateString()} - {searchParams.checkOut.toLocaleDateString()}
+                    </div>
+                    {hotel.checkInTime && (
+                      <div className="flex items-center text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        <Clock size={12} className="mr-1" /> Check-in: {hotel.checkInTime}
+                      </div>
+                    )}
                   </div>
+                  {hotel.reviewScore && (
+                    <div className="mt-2 text-xs flex items-center gap-1">
+                      <span className="font-bold text-brand-700 bg-brand-50 px-1.5 rounded">{hotel.reviewScore}/10</span>
+                      <span className="text-gray-400">({hotel.reviewCount} reviews)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -256,6 +283,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
           {/* STEP 3: GUEST DETAILS */}
           {step === 'details' && selectedOffer && (
             <form onSubmit={handleSubmitDetails} className="space-y-5">
+              {errorMsg && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-start gap-2 mb-4">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  {errorMsg}
+                </div>
+              )}
               <div className="bg-brand-50 p-4 rounded-xl border border-brand-100 flex justify-between items-center">
                 <div>
                   <div className="text-xs text-brand-700 font-bold uppercase">Selected Room</div>
@@ -313,8 +346,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex justify-center items-center">
-                Continue to Payment <ArrowRight size={18} className="ml-2" />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg mt-4 flex justify-center items-center disabled:opacity-50"
+              >
+                {isLoading ? <Loader2 className="animate-spin" /> : <>Continue to Payment <ArrowRight size={18} className="ml-2" /></>}
               </button>
             </form>
           )}
@@ -325,6 +362,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-gray-900">${selectedOffer.price}</div>
                 <div className="text-sm text-gray-500">Total due now (Merchant: {hotel.name})</div>
+
+                {/* [NEW] Price Transparency: Pay at Property */}
+                {quote && quote.due_at_accommodation_amount && parseFloat(quote.due_at_accommodation_amount) > 0 && (
+                  <div className="mt-3 bg-amber-50 text-amber-800 text-xs p-2 rounded border border-amber-200 inline-block text-left">
+                    <span className="font-bold">Note:</span> A separate {quote.due_at_accommodation_currency} {quote.due_at_accommodation_amount} tax/fee is payable directly at the hotel.
+                  </div>
+                )}
               </div>
 
               {/* Container for Duffel Components Iframe */}
