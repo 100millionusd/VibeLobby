@@ -16,11 +16,12 @@ interface BookingModalProps {
   };
   onClose: () => void;
   onConfirm: () => void;
+  onOpenLegal: (page: 'privacy' | 'terms' | 'cookies') => void;
 }
 
 type BookingStep = 'search' | 'selection' | 'details' | 'payment' | 'confirmed';
 
-const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchParams, onClose, onConfirm }) => {
+const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchParams, onClose, onConfirm, onOpenLegal }) => {
   const { grantDigitalKey, user } = useAuth();
   const [step, setStep] = useState<BookingStep>('search');
 
@@ -29,6 +30,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
   const [selectedOffer, setSelectedOffer] = useState<RoomOffer | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Legal State
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Form State
   const [guestDetails, setGuestDetails] = useState<GuestDetails>({ firstName: '', lastName: '', email: '' });
@@ -383,10 +387,31 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
                 </div>
               )}
 
+              {/* T&C Checkbox */}
+              <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms-checkbox"
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 cursor-pointer"
+                  />
+                </div>
+                <div className="text-xs text-gray-600">
+                  <label htmlFor="terms-checkbox" className="cursor-pointer select-none">
+                    I agree to the <button onClick={() => onOpenLegal('terms')} className="text-brand-600 hover:underline font-bold">Terms of Service</button>, <button onClick={() => onOpenLegal('privacy')} className="text-brand-600 hover:underline font-bold">Privacy Policy</button>, and <button onClick={() => onOpenLegal('cookies')} className="text-brand-600 hover:underline font-bold">Cookie Policy</button>.
+                  </label>
+                  <div className="mt-1 text-gray-400 text-[10px]">
+                    Note: Your payment is processed securely via Duffel.
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={handlePay}
-                disabled={isLoading}
-                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all disabled:opacity-50"
+                disabled={isLoading || !acceptedTerms}
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? <Loader2 className="animate-spin" /> : `Pay $${selectedOffer.price} & Book`}
               </button>
