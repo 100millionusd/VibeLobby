@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera, ChevronLeft, Calendar } from 'lucide-react';
+import { X, User as UserIcon, LogOut, Save, Loader2, RefreshCw, Camera, ChevronLeft, Calendar, Ghost } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileModalProps {
@@ -11,6 +11,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
 
     const [name, setName] = useState(user?.name || '');
     const [bio, setBio] = useState(user?.bio || '');
+    const [isGhostMode, setIsGhostMode] = useState(user?.isGhostMode || false);
     const [isSaving, setIsSaving] = useState(false);
 
     // New State for Details View
@@ -25,7 +26,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
 
         setIsSaving(true);
         try {
-            await updateUser({ name, bio });
+            await updateUser({ name, bio, isGhostMode });
             onClose();
         } catch (error) {
             console.error("Failed to save profile", error);
@@ -259,6 +260,28 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
                                         maxLength={100}
                                     />
                                     <div className="text-right text-[10px] text-gray-400">{bio.length}/100</div>
+                                </div>
+
+                                {/* GHOST MODE TOGGLE */}
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-full ${isGhostMode ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-500'}`}>
+                                            <Ghost size={18} />
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-900 text-sm">Ghost Mode</div>
+                                            <div className="text-xs text-gray-500">Hide me from the "Who's Here" list</div>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={isGhostMode}
+                                            onChange={(e) => setIsGhostMode(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </label>
                                 </div>
 
                                 {/* DIGITAL KEYS / BOOKINGS SECTION */}

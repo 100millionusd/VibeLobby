@@ -37,6 +37,7 @@ export interface User {
   walletAddress?: string; // ETH Address
   verifier?: string; // 'google', 'facebook', 'ethereum', etc.
   isGuest?: boolean;
+  isGhostMode?: boolean; // [NEW] If true, hidden from "Who's Here" lists
   digitalKeys: DigitalKey[]; // Replaces verifiedBookings for time-based access
 }
 

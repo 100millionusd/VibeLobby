@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, ChevronLeft, MoreVertical, User as UserIcon, MapPin, Lock, CheckCircle, AlertTriangle, Loader2, Key, Upload, FileImage, Image as ImageIcon, X, Hand, BellRing, Check, Shield, Flag } from 'lucide-react';
+import { Send, Sparkles, ChevronLeft, MoreVertical, User as UserIcon, MapPin, Lock, CheckCircle, AlertTriangle, Loader2, Key, Upload, FileImage, Image as ImageIcon, X, Hand, BellRing, Check, Shield, Flag, Ghost } from 'lucide-react';
 import { ChatMessage, ScoredHotel, User, Nudge } from '../types';
 import { generateLobbyIcebreaker, verifyBookingReceipt } from '../services/geminiService';
 import { NotificationItem } from './NotificationToast';
@@ -773,7 +773,9 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     }
   });
 
-  const displayMembers = allDisplayUsers.slice(0, 10); // Show more users now
+  const displayMembers = allDisplayUsers
+    .filter(u => !u.isGhostMode || u.id === currentUser.id)
+    .slice(0, 10); // Show more users now
 
   // --- RENDER: MAIN CHAT ---
   return (
@@ -863,6 +865,11 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                     <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-brand-600 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
                     {hasIncoming && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white">!</div>}
                     {unreadCounts[user.id] > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white shadow-sm">{unreadCounts[user.id]}</div>}
+                    {user.isGhostMode && (
+                      <div className="absolute -top-1 -left-1 w-4 h-4 bg-zinc-800 rounded-full border border-white flex items-center justify-center text-white" title="Ghost Mode Active">
+                        <Ghost size={8} />
+                      </div>
+                    )}
                   </div>
                   <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? 'You' : user.name}</span>
                 </button>
