@@ -98,6 +98,9 @@ const App: React.FC = () => {
   // Gallery State
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
+  // Sorting State
+  const [sortBy, setSortBy] = useState<'vibe' | 'price_asc' | 'price_desc'>('vibe');
+
   // Legal Modal State
   const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
 
@@ -152,6 +155,7 @@ const App: React.FC = () => {
       );
       setResults(sortedHotels);
       setActiveSearchTerm(targetVibe);
+      setSortBy('vibe'); // Reset sort to default on new search
       setDisplaySearchTerm(userDisplay);
       setAiReasoning(reasoning);
       setStep('results');
@@ -448,30 +452,74 @@ const App: React.FC = () => {
         {step === 'results' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-            <div className="flex justify-between items-baseline mb-4">
+            {/* Header / Sort Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4">
               <div>
-                <h2 className="text-xl font-bold">Recommended for you</h2>
-                {aiReasoning && (
-                  <p className="text-xs text-purple-600 font-medium flex items-center mt-1">
-                    <Sparkles size={12} className="mr-1" />
-                    AI mapped "{displaySearchTerm}" to "{activeSearchTerm}"
-                  </p>
-                )}
+                <button
+                  onClick={() => setStep('home')}
+                  className="flex items-center text-gray-400 hover:text-gray-900 mb-2 transition-colors"
+                >
+                  <ArrowLeft size={16} className="mr-1" /> Back
+                </button>
+                <h2 className="text-2xl font-extrabold text-gray-900 leading-none">
+                  Recommended for you
+                </h2>
+                <div className="text-sm font-medium text-gray-500 mt-1 flex items-center gap-1">
+                  In {selectedCity} • {results.length} results
+                </div>
               </div>
-              <span className="text-sm text-gray-500">{results.length} results</span>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-white border border-gray-200 text-gray-700 text-sm font-bold py-2 pl-3 pr-8 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm appearance-none"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em` }}
+                >
+                  <option value="vibe">✨ Vibe Match</option>
+                  <option value="price_asc">💰 Price: Low to High</option>
+                  <option value="price_desc">💎 Price: High to Low</option>
+                </select>
+              </div>
             </div>
+
+            {/* AI Insight */}
+            {aiReasoning && (
+              <div className="bg-gradient-to-r from-brand-50 to-purple-50 p-4 rounded-xl border border-brand-100 mb-6 flex gap-3 items-start shadow-sm animate-in fade-in slide-in-from-top-2">
+                <div className="bg-white p-2 rounded-lg shadow-sm text-brand-600 mt-0.5">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-brand-800 uppercase tracking-wide mb-1">AI Recommendation</div>
+                  <p className="text-sm text-gray-700 leading-relaxed italic">
+                    "{aiReasoning}"
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* RESULTS OR FALLBACK */}
             {results.length > 0 ? (
-              results.map((hotel) => (
-                <SearchCard
-                  key={hotel.id}
-                  hotel={hotel}
-                  searchedInterest={activeSearchTerm}
-                  onSelect={handleHotelSelect}
-                  onBook={handleDirectBook}
-                />
-              ))
+              <div className="space-y-4 pb-20">
+                {[...results]
+                  .sort((a, b) => {
+                    if (sortBy === 'price_asc') return a.pricePerNight - b.pricePerNight;
+                    if (sortBy === 'price_desc') return b.pricePerNight - a.pricePerNight;
+                    // Default: Vibe (Assuming results come pre-sorted by Vibe from API, or use vibeScore)
+                    return (b.vibeScore || 0) - (a.vibeScore || 0);
+                  })
+                  .map((hotel) => (
+                    <SearchCard
+                      key={hotel.id}
+                      hotel={hotel}
+                      searchedInterest={activeSearchTerm}
+                      onSelect={handleHotelSelect}
+                      onBook={handleDirectBook}
+                    />
+                  ))}
+              </div>
             ) : (
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
                 <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
