@@ -13,6 +13,7 @@
     "@duffel/api": "^4.21.0",
     "@google/genai": "^1.33.0",
     "@supabase/supabase-js": "^2.88.0",
+    "@types/leaflet": "^1.9.21",
     "@web3auth/auth-adapter": "^9.4.4",
     "@web3auth/base": "9.4.4",
     "@web3auth/ethereum-provider": "9.4.4",
@@ -21,10 +22,12 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "leaflet": "^1.9.4",
     "loglevel": "^1.9.2",
     "lucide-react": "^0.561.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

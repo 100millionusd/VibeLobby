@@ -12,6 +12,7 @@ import NotificationToast, { NotificationItem } from './components/NotificationTo
 import Footer from './components/Footer';
 import CookieBanner from './components/CookieBanner';
 import type { LegalPage } from './components/LegalModal';
+import HotelMap from './components/HotelMap';
 
 // Lazy Load Heavy Components
 const LobbyChat = lazy(() => import('./components/LobbyChat'));
@@ -100,6 +101,7 @@ const App: React.FC = () => {
 
   // Sorting State
   const [sortBy, setSortBy] = useState<'vibe' | 'price_asc' | 'price_desc'>('vibe');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Legal Modal State
   const [legalPage, setLegalPage] = useState<LegalPage | null>(null);
@@ -469,19 +471,37 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sort Dropdown */}
-              <div className="flex items-center gap-2 self-end sm:self-auto">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-white border border-gray-200 text-gray-700 text-sm font-bold py-2 pl-3 pr-8 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm appearance-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em` }}
-                >
-                  <option value="vibe">✨ Vibe Match</option>
-                  <option value="price_asc">💰 Price: Low to High</option>
-                  <option value="price_desc">💎 Price: High to Low</option>
-                </select>
+              {/* Sort Dropdown & View Toggle */}
+              <div className="flex items-center gap-4 self-end sm:self-auto">
+                {/* View Toggle */}
+                <div className="bg-gray-100 p-1 rounded-lg flex items-center">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => setViewMode('map')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Map
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:inline">Sort:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="bg-white border border-gray-200 text-gray-700 text-sm font-bold py-2 pl-3 pr-8 rounded-lg outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-sm appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 0.5rem center`, backgroundRepeat: `no-repeat`, backgroundSize: `1.5em 1.5em` }}
+                  >
+                    <option value="vibe">✨ Vibe Match</option>
+                    <option value="price_asc">💰 Price: Low to High</option>
+                    <option value="price_desc">💎 Price: High to Low</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -502,24 +522,35 @@ const App: React.FC = () => {
 
             {/* RESULTS OR FALLBACK */}
             {results.length > 0 ? (
-              <div className="space-y-4 pb-20">
-                {[...results]
-                  .sort((a, b) => {
-                    if (sortBy === 'price_asc') return a.pricePerNight - b.pricePerNight;
-                    if (sortBy === 'price_desc') return b.pricePerNight - a.pricePerNight;
-                    // Default: Vibe (Assuming results come pre-sorted by Vibe from API, or use vibeScore)
-                    return (b.vibeScore || 0) - (a.vibeScore || 0);
-                  })
-                  .map((hotel) => (
-                    <SearchCard
-                      key={hotel.id}
-                      hotel={hotel}
-                      searchedInterest={activeSearchTerm}
-                      onSelect={handleHotelSelect}
-                      onBook={handleDirectBook}
-                    />
-                  ))}
-              </div>
+              viewMode === 'map' ? (
+                <div className="w-full animate-in fade-in zoom-in-95 duration-300">
+                  <HotelMap
+                    hotels={results}
+                    selectedHotel={selectedHotel}
+                    onSelectHotel={handleHotelSelect}
+                    onBook={handleDirectBook}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-4 pb-20">
+                  {[...results]
+                    .sort((a, b) => {
+                      if (sortBy === 'price_asc') return a.pricePerNight - b.pricePerNight;
+                      if (sortBy === 'price_desc') return b.pricePerNight - a.pricePerNight;
+                      // Default: Vibe (Assuming results come pre-sorted by Vibe from API, or use vibeScore)
+                      return (b.vibeScore || 0) - (a.vibeScore || 0);
+                    })
+                    .map((hotel) => (
+                      <SearchCard
+                        key={hotel.id}
+                        hotel={hotel}
+                        searchedInterest={activeSearchTerm}
+                        onSelect={handleHotelSelect}
+                        onBook={handleDirectBook}
+                      />
+                    ))}
+                </div>
+              )
             ) : (
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
                 <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
