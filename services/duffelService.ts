@@ -99,13 +99,6 @@ export const duffelService = {
 
             console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
 
-            // --- DEBUG ROOM STRUCTURE ---
-            roomsList.forEach((r: any, i: number) => {
-              if (i === 0) {
-                console.log(`[Duffel] Room Keys available:`, Object.keys(r));
-                console.log(`[Duffel] Room Photos Dump for first room:`, JSON.stringify(r.photos));
-              }
-            });
 
             const allRates = roomsList.flatMap((room: any) => {
               // Fallback to Main Hotel Images if room has none

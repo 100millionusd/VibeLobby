@@ -43,10 +43,7 @@ export const web3auth = new Web3Auth({
 const authAdapter = new AuthAdapter({
   adapterSettings: {
     uxMode: "popup", // Revert to popup as redirect is failing
-    whiteLabel: {
-      appName: "VibeLobby",
-      theme: { primary: "#e11d48" }
-    }
+    // whiteLabel removed: Requires Premium Plan
   },
   privateKeyProvider
 });
