@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut, MessageCircle } from 'lucide-react';
+import { Search, MapPin, ArrowRight, ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, ExternalLink, Globe, Flag, LogIn, LogOut, MessageCircle, Wifi, Coffee, Dumbbell, Utensils, Tv, Car, Wind, Briefcase } from 'lucide-react';
 import { ACTIVITIES } from './services/mockData';
 import { generateSocialForecast, findBestMatchingVibe } from './services/geminiService';
 import { ScoredHotel, User } from './types';
@@ -19,6 +19,20 @@ const LobbyChat = lazy(() => import('./components/LobbyChat'));
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const LegalModal = lazy(() => import('./components/LegalModal'));
 const ProfileModal = lazy(() => import('./components/ProfileModal'));
+
+// Helper: Amenity Icons
+const getAmenityIcon = (label: string) => {
+  const l = label.toLowerCase();
+  if (l.includes('wifi') || l.includes('internet')) return <Wifi size={18} />;
+  if (l.includes('coffee') || l.includes('breakf')) return <Coffee size={18} />;
+  if (l.includes('gym') || l.includes('fitness')) return <Dumbbell size={18} />;
+  if (l.includes('food') || l.includes('restaur') || l.includes('din')) return <Utensils size={18} />;
+  if (l.includes('tv') || l.includes('cable')) return <Tv size={18} />;
+  if (l.includes('park') || l.includes('valet')) return <Car size={18} />;
+  if (l.includes('ac') || l.includes('air cond')) return <Wind size={18} />;
+  if (l.includes('business') || l.includes('desk')) return <Briefcase size={18} />;
+  return <Sparkles size={18} />; // Default
+};
 
 const App: React.FC = () => {
   // Auth Context
@@ -638,16 +652,43 @@ const App: React.FC = () => {
             </div>
 
             {/* AI SOCIAL FORECAST */}
-            <div className="bg-gradient-to-br from-brand-50 to-purple-50 p-5 rounded-xl border border-brand-100 mb-6 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-brand-50 to-purple-50 p-5 rounded-xl border border-brand-100 mb-8 relative overflow-hidden shadow-sm">
               <div className="absolute top-0 right-0 p-2 opacity-10">
                 <Search size={100} />
               </div>
               <h3 className="text-sm font-bold text-brand-800 uppercase tracking-wider mb-2 flex items-center">
-                AI Social Forecast
+                <Sparkles size={16} className="mr-2" /> AI Social Forecast
               </h3>
-              <p className="text-gray-800 font-medium italic leading-relaxed">
+              <p className="text-gray-800 font-medium italic leading-relaxed relative z-10">
                 "{aiForecast}"
               </p>
+            </div>
+
+            {/* ABOUT THIS STAY */}
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">About this stay</h3>
+              <div className="text-gray-600 leading-relaxed text-sm">
+                <p>{selectedHotel.description}</p>
+                {/* Optional: Add Show More logic if description is > 300 chars */}
+              </div>
+            </div>
+
+            {/* KEY AMENITIES */}
+            <div className="mb-24">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Key amenities</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-2">
+                {selectedHotel.amenities.slice(0, 9).map((amenity, idx) => (
+                  <div key={idx} className="flex items-center text-gray-700 text-sm">
+                    <span className="text-gray-400 mr-2">{getAmenityIcon(amenity)}</span>
+                    <span className="truncate">{amenity}</span>
+                  </div>
+                ))}
+              </div>
+              {selectedHotel.amenities.length > 9 && (
+                <button className="text-brand-600 font-bold text-sm mt-4 hover:underline">
+                  Show all {selectedHotel.amenities.length} amenities
+                </button>
+              )}
             </div>
 
             <div className="mb-6">
