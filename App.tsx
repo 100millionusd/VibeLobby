@@ -490,8 +490,7 @@ const App: React.FC = () => {
               {/* Sort Dropdown & View Toggle */}
               <div className="flex items-center gap-4 self-end sm:self-auto">
                 {/* View Toggle */}
-                {/* View Toggle - Hidden on Desktop */}
-                <div className="bg-gray-100 p-1 rounded-lg flex items-center md:hidden">
+                <div className="bg-gray-100 p-1 rounded-lg flex items-center">
                   <button
                     onClick={() => setViewMode('list')}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -538,74 +537,58 @@ const App: React.FC = () => {
             )}
 
             {/* RESULTS OR FALLBACK */}
-            {/* SPLIT VIEW (Desktop: Flex / Mobile: Block) */}
-            <div className={`w-full ${results.length > 0 ? 'md:flex md:h-[calc(100vh-140px)] md:overflow-hidden gap-6' : ''}`}>
-
-              {/* LEFT SIDE: LIST (or full width on mobile if mode=list) */}
-              <div className={`
-                 w-full md:w-[45%] md:overflow-y-auto md:pr-2 pb-20 custom-scrollbar
-                 ${viewMode === 'list' ? 'block' : 'hidden md:block'}
-              `}>
-                {results.length > 0 ? (
-                  <div className="space-y-4">
-                    {[...results]
-                      .sort((a, b) => {
-                        if (sortBy === 'price_asc') return a.pricePerNight - b.pricePerNight;
-                        if (sortBy === 'price_desc') return b.pricePerNight - a.pricePerNight;
-                        return (b.vibeScore || 0) - (a.vibeScore || 0);
-                      })
-                      .map((hotel) => (
-                        <SearchCard
-                          key={hotel.id}
-                          hotel={hotel}
-                          searchedInterest={activeSearchTerm}
-                          onSelect={handleHotelSelect}
-                          onBook={handleDirectBook}
-                        />
-                      ))}
-                  </div>
-                ) : (
-                  /* EMPTY STATE */
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
-                    <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
-                      <Flag size={40} className="fill-brand-100" />
-                    </div>
-                    <h3 className="text-xl font-extrabold text-gray-900 mb-2">Be the Pioneer in {selectedCity}</h3>
-                    <p className="text-gray-600 mb-8 max-w-xs mx-auto leading-relaxed">
-                      No one has started a <strong>{activeSearchTerm}</strong> lobby here yet.
-                      <br /><br />
-                      Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
-                    </p>
-                    <button
-                      onClick={() => {
-                        const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
-                        window.location.href = checkoutUrl;
-                      }}
-                      className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    >
-                      Search on Duffel <ExternalLink size={18} className="ml-2" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* RIGHT SIDE: MAP (Hidden on mobile unless mode=map, Visible on Desktop) */}
-              {results.length > 0 && (
-                <div className={`
-                 w-full h-[500px] md:h-full md:w-[55%] relative rounded-xl overflow-hidden shadow-sm border border-gray-200
-                 ${viewMode === 'map' ? 'block' : 'hidden md:block'}
-              `}>
+            {results.length > 0 ? (
+              viewMode === 'map' ? (
+                <div className="w-full animate-in fade-in zoom-in-95 duration-300">
                   <HotelMap
                     hotels={results}
                     selectedHotel={selectedHotel}
                     onSelectHotel={handleHotelSelect}
                     onBook={handleDirectBook}
-                    className="h-full w-full"
                   />
                 </div>
-              )}
-
-            </div>
+              ) : (
+                <div className="space-y-4 pb-20">
+                  {[...results]
+                    .sort((a, b) => {
+                      if (sortBy === 'price_asc') return a.pricePerNight - b.pricePerNight;
+                      if (sortBy === 'price_desc') return b.pricePerNight - a.pricePerNight;
+                      // Default: Vibe (Assuming results come pre-sorted by Vibe from API, or use vibeScore)
+                      return (b.vibeScore || 0) - (a.vibeScore || 0);
+                    })
+                    .map((hotel) => (
+                      <SearchCard
+                        key={hotel.id}
+                        hotel={hotel}
+                        searchedInterest={activeSearchTerm}
+                        onSelect={handleHotelSelect}
+                        onBook={handleDirectBook}
+                      />
+                    ))}
+                </div>
+              )
+            ) : (
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-5 shadow-sm">
+                  <Flag size={40} className="fill-brand-100" />
+                </div>
+                <h3 className="text-xl font-extrabold text-gray-900 mb-2">Be the Pioneer in {selectedCity}</h3>
+                <p className="text-gray-600 mb-8 max-w-xs mx-auto leading-relaxed">
+                  No one has started a <strong>{activeSearchTerm}</strong> lobby here yet.
+                  <br /><br />
+                  Be the first! Book a stay to <strong>launch the lobby</strong> and set the vibe for travelers arriving this week.
+                </p>
+                <button
+                  onClick={() => {
+                    const checkoutUrl = import.meta.env.VITE_DUFFEL_CHECKOUT_URL || 'https://app.duffel.com/037c9bb33f4b9e9f0790d0d/test';
+                    window.location.href = checkoutUrl;
+                  }}
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Search on Duffel <ExternalLink size={18} className="ml-2" />
+                </button>
+              </div>
+            )}
 
           </div>
         )}

@@ -22,7 +22,6 @@ interface HotelMapProps {
     selectedHotel: ScoredHotel | null;
     onSelectHotel: (hotel: ScoredHotel) => void;
     onBook: (hotel: ScoredHotel) => void;
-    className?: string; // New: Allow parent to control sizing
 }
 
 // Helper to recenter map when selection changes
@@ -34,7 +33,7 @@ const MapUpdater: React.FC<{ center: [number, number]; zoom: number }> = ({ cent
     return null;
 };
 
-const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHotel, onBook, className }) => {
+const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHotel, onBook }) => {
     // Default Center (Barcelona) if no hotels
     const defaultCenter: [number, number] = [41.3851, 2.1734];
 
@@ -42,21 +41,8 @@ const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHote
         ? [selectedHotel.coordinates.lat, selectedHotel.coordinates.lng]
         : (hotels.length > 0 ? [hotels[0].coordinates.lat, hotels[0].coordinates.lng] : defaultCenter);
 
-    // Create Price Marker Icon
-    const createPriceIcon = (price: number, isSelected: boolean) => L.divIcon({
-        className: 'bg-transparent', // Remove default leaflet square
-        html: `
-            <div class="${isSelected ? 'bg-gray-900 border-gray-900 z-50 scale-110' : 'bg-brand-600 border-white hover:bg-brand-700 hover:scale-105'} 
-                        text-white font-bold px-2 py-1 rounded-lg shadow-md border-2 transition-transform cursor-pointer flex items-center justify-center text-xs whitespace-nowrap">
-                € ${price}
-            </div>
-        `,
-        iconSize: [60, 30],
-        iconAnchor: [30, 15] // Center it
-    });
-
     return (
-        <div className={`w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 z-0 relative ${className || 'h-[600px]'}`}>
+        <div className="h-[600px] w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 z-0 relative">
             <MapContainer
                 center={mapCenter}
                 zoom={13}
@@ -74,10 +60,6 @@ const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHote
                     <Marker
                         key={hotel.id}
                         position={[hotel.coordinates.lat, hotel.coordinates.lng]}
-                        icon={createPriceIcon(hotel.pricePerNight, selectedHotel?.id === hotel.id)}
-                        eventHandlers={{
-                            click: () => onSelectHotel(hotel)
-                        }}
                     >
                         <Popup>
                             <div className="min-w-[200px] cursor-pointer" onClick={() => onSelectHotel(hotel)}>
