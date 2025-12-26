@@ -268,16 +268,41 @@ const BookingModal: React.FC<BookingModalProps> = ({ hotel, interest, searchPara
                 <div
                   key={offer.id}
                   onClick={() => handleSelectOffer(offer)}
-                  className="border border-gray-200 rounded-xl p-4 hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group"
+                  className="border border-gray-200 rounded-xl overflow-hidden hover:border-brand-500 hover:shadow-md transition-all cursor-pointer group mb-4"
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-gray-900">{offer.name}</h4>
-                    <span className="font-bold text-brand-600">${offer.price}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-3 leading-relaxed">{offer.description}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Bed size={14} /> {offer.bedType}</span>
-                    <span className="flex items-center gap-1"><Users size={14} /> Max {offer.capacity}</span>
+                  {/* NEW: Room Image Carousel (Just first image for now) */}
+                  {offer.photos && offer.photos.length > 0 && (
+                    <div className="h-40 w-full overflow-hidden relative">
+                      <img
+                        src={offer.photos[0]}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        alt={offer.name}
+                      />
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center">
+                        <Bed size={10} className="mr-1" /> {offer.photos.length} photos
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-bold text-gray-900 leading-tight pr-2">{offer.name}</h4>
+                      <div className="text-right">
+                        <span className="font-bold text-brand-600 text-lg">${offer.price}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed line-clamp-3">
+                      {offer.description}
+                    </p>
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+                      <span className="flex items-center gap-1 font-medium"><Bed size={14} className="text-gray-400" /> {offer.bedType}</span>
+                      <span className="flex items-center gap-1 font-medium"><Users size={14} className="text-gray-400" /> Max {offer.capacity} Guests</span>
+                      <span className="flex items-center gap-1 ml-auto text-green-600 font-medium">
+                        <ShieldCheck size={14} /> {offer.cancellationPolicy === 'refundable' ? 'Free Cancellation' : 'Non-Refundable'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}

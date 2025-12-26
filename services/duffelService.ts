@@ -102,7 +102,9 @@ export const duffelService = {
             const allRates = roomsList.flatMap((room: any) => {
               return (room.rates || []).map((rate: any) => ({
                 ...rate,
-                _roomName: room.name || rate._roomName // Support fallback name
+                _roomName: room.name || rate._roomName,
+                _roomDescription: room.description, // [NEW] Capture Description
+                _roomPhotos: room.photos?.map((p: any) => p.url) // [NEW] Capture Photos
               }));
             });
 
@@ -110,7 +112,8 @@ export const duffelService = {
               return allRates.map((rate: any) => ({
                 id: rate.id,
                 name: rate._roomName || 'Standard Room',
-                description: `Real stay at ${hotelName}`,
+                description: rate._roomDescription || `Standard stay option at ${hotelName}`,
+                photos: rate._roomPhotos || [],
                 price: parseFloat(rate.total_amount),
                 currency: rate.total_currency,
                 cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',

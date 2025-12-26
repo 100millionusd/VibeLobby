@@ -126,6 +126,7 @@ export interface RoomOffer {
   cancellationPolicy: 'refundable' | 'non_refundable';
   bedType: string;
   capacity: number;
+  photos?: string[]; // [NEW] Room images
 }
 
 export interface GuestDetails {
