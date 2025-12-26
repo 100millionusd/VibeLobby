@@ -131,23 +131,6 @@ export const duffelService = {
                 id: rate.id,
                 name: rate._roomName || 'Standard Room',
                 description: rate._roomDescription,
-                photos: rate._roomPhotos,
-                price: parseFloat(rate.price || rate.total_amount),
-                currency: rate.currency || rate.total_currency,
-                cancellationPolicy: rate.cancellationPolicy, // Already mapped in flatMap?? No wait.
-                // Wait, flatMap already mapped it!
-                // The previous code mapped TWICE.
-                // flatMap returned structure A, then return map converted to ScoredHotel structure B.
-                // Let's look at the flatMap again.
-
-                // The flatMap returned:
-                // { ...rate, _roomName, _roomDescription, _roomPhotos, price, currency, cancellationPolicy, bedType, capacity }
-
-                // So we just need to map it to the final RoomOffer format.
-
-                id: rate.id,
-                name: rate._roomName || 'Standard Room',
-                description: rate._roomDescription,
                 photos: rate._roomPhotos || [],
                 price: rate.price,
                 currency: rate.currency,
