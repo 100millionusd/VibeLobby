@@ -19,8 +19,13 @@ router.post('/duffel', async (req, res) => {
             const hmac = crypto.createHmac('sha256', secret);
             const digest = hmac.update(req.rawBody).digest('hex');
 
+            console.log(`[Webhook Debug] Secret Configured: ${secret ? 'Yes (Starts with ' + secret.substring(0, 4) + '...)' : 'NO'}`);
+            console.log(`[Webhook Debug] Received Signature: ${signature}`);
+            console.log(`[Webhook Debug] Computed Digest:    ${digest}`);
+            console.log(`[Webhook Debug] Raw Body Length:    ${req.rawBody.length}`);
+
             if (signature !== digest) {
-                console.warn("Webhook Signature Mismatch!", { received: signature, computed: digest });
+                console.warn("Webhook Signature Mismatch!");
                 return res.status(401).send("Invalid Signature");
             }
         } else {
