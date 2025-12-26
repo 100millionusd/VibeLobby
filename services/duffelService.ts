@@ -334,20 +334,25 @@ export const duffelService = {
 };
 
 // Helper: Fix doubled descriptions from API
+// Helper: Fix doubled descriptions from API
 function cleanDescription(desc: string | undefined): string {
   if (!desc) return '';
 
-  // Check for exact repetition (A + A) or (A + " " + A)
+  // Robust Strategy: Check if the second half STARTS with the first half (fuzzy match)
   const len = desc.length;
-  // Try finding the midpoint split
-  for (let i = Math.floor(len / 2); i >= 10; i--) {
-    // We only look for repeats of substantial length (>10 chars)
+  // We scan from the midpoint backwards.
+  for (let i = Math.floor(len / 2); i >= 20; i--) {
     const firstHalf = desc.substring(0, i).trim();
     const secondHalf = desc.substring(i).trim();
 
-    if (firstHalf === secondHalf) {
-      return firstHalf;
-    }
+    // 1. Exact match
+    if (firstHalf === secondHalf) return firstHalf;
+
+    // 2. Fuzzy match: If the second half starts with the first half (ignoring trailing punctuation)
+    if (secondHalf.startsWith(firstHalf)) return firstHalf;
+
+    // 3. Sentence match: If first half is > 50 chars and present in second half
+    if (firstHalf.length > 50 && secondHalf.includes(firstHalf)) return firstHalf;
   }
   return desc;
 }
