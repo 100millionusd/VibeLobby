@@ -112,6 +112,7 @@ const App: React.FC = () => {
 
   // Gallery State
   const [detailImageIndex, setDetailImageIndex] = useState(0);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   // Sorting State
   const [sortBy, setSortBy] = useState<'vibe' | 'price_asc' | 'price_desc'>('vibe');
@@ -186,6 +187,7 @@ const App: React.FC = () => {
   const handleHotelSelect = async (hotel: ScoredHotel) => {
     setSelectedHotel(hotel);
     setDetailImageIndex(0);
+    setShowAllAmenities(false);
     setStep('details');
 
     // Reset secondary data
@@ -677,7 +679,7 @@ const App: React.FC = () => {
             <div className="mb-24">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Key amenities</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-2">
-                {selectedHotel.amenities.slice(0, 9).map((amenity, idx) => (
+                {selectedHotel.amenities.slice(0, showAllAmenities ? undefined : 9).map((amenity, idx) => (
                   <div key={idx} className="flex items-center text-gray-700 text-sm">
                     <span className="text-gray-400 mr-2">{getAmenityIcon(amenity)}</span>
                     <span className="truncate">{amenity}</span>
@@ -685,8 +687,11 @@ const App: React.FC = () => {
                 ))}
               </div>
               {selectedHotel.amenities.length > 9 && (
-                <button className="text-brand-600 font-bold text-sm mt-4 hover:underline">
-                  Show all {selectedHotel.amenities.length} amenities
+                <button
+                  onClick={() => setShowAllAmenities(!showAllAmenities)}
+                  className="text-brand-600 font-bold text-sm mt-4 hover:underline"
+                >
+                  {showAllAmenities ? 'Show less' : `Show all ${selectedHotel.amenities.length} amenities`}
                 </button>
               )}
             </div>
