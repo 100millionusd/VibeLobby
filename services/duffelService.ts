@@ -263,6 +263,9 @@ export const duffelService = {
     const coords = cities[city] || cities['Barcelona']; // Default to BCN
 
     try {
+      console.log(`[Duffel] Searching Hotels in ${city} (${coords.lat}, ${coords.lng})`);
+      console.log(`[Duffel] Params: CheckIn=${checkIn.toISOString()}, CheckOut=${checkOut.toISOString()}, Rooms=${rooms}, Guests=${guests}`);
+
       const searchRes = await fetch('/api/hotels/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,7 +278,7 @@ export const duffelService = {
             }
           },
           checkInDate: checkIn.toISOString().split('T')[0],
-          checkOutDate: checkOut.toISOString().split('T')[0],
+          checkOutDate: checkOut.toISOString().split('T')[0], // Ensure this is not same as checkIn
           rooms: rooms,
           guests: Array(guests).fill({ type: 'adult' })
         })

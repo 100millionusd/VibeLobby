@@ -24,6 +24,7 @@ router.post('/search', async (req, res) => {
             guests: guests || [{ type: 'adult' }]
         });
 
+        console.log(`[Backend] Duffel Search Results: ${search.data.results?.length || 0}`);
         res.json(search.data);
     } catch (error) {
         console.error('Duffel Search Error:', error);

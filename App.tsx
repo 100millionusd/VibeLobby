@@ -129,11 +129,24 @@ const App: React.FC = () => {
     // 2. API Call (Async)
     const trimmedCity = selectedCity.trim();
     try {
+      // Validate Dates (Ensure at least 1 night)
+      let searchCheckOut = new Date(checkOut);
+      const searchCheckIn = new Date(checkIn);
+
+      if (searchCheckOut <= searchCheckIn) {
+        console.warn("Invalid dates detected (CheckOut <= CheckIn). Auto-correcting to +1 night.");
+        searchCheckOut = new Date(searchCheckIn);
+        searchCheckOut.setDate(searchCheckIn.getDate() + 1);
+        setCheckOut(searchCheckOut.toISOString().split('T')[0]); // Update UI
+      }
+
+      console.log(`[Frontend] Searching: ${trimmedCity}, ${targetVibe}, In:${searchCheckIn.toISOString()}, Out:${searchCheckOut.toISOString()}`);
+
       const sortedHotels = await api.hotels.search(
         targetVibe,
         trimmedCity,
-        new Date(checkIn),
-        new Date(checkOut),
+        searchCheckIn,
+        searchCheckOut,
         roomCount,
         guestCount
       );
