@@ -664,10 +664,10 @@ const App: React.FC = () => {
             hotel={selectedHotel}
             interest={activeSearchTerm}
             searchParams={{
-              checkIn: new Date(),
-              checkOut: new Date(Date.now() + 86400000 * 3), // Mock 3 days
-              guestCount: 2,
-              roomCount: 1
+              checkIn: new Date(checkIn),
+              checkOut: new Date(checkOut),
+              guestCount: guestCount,
+              roomCount: roomCount
             }}
             onClose={() => setShowBooking(false)}
             onConfirm={handleBookingConfirm}
