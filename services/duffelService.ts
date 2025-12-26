@@ -309,7 +309,7 @@ export const duffelService = {
       id: offer.accommodation.id || offer.id,
       name: offer.accommodation.name || offer.name || 'Unknown Hotel',
       city: city,
-      description: offer.accommodation.description || `Stay at ${offer.accommodation.name}. Great location for meeting fellow travelers.`,
+      description: cleanDescription(offer.accommodation.description) || `Stay at ${offer.accommodation.name}. Great location for meeting fellow travelers.`,
       images: offer.accommodation.photos?.map((p: any) => p.url) || ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000'],
       pricePerNight: parseFloat(offer.cheapest_rate_total_amount || offer.total_amount || offer.total_currency_amount || '150'),
       rating: offer.accommodation.rating || 4.5,
@@ -332,3 +332,22 @@ export const duffelService = {
     };
   }
 };
+
+// Helper: Fix doubled descriptions from API
+function cleanDescription(desc: string | undefined): string {
+  if (!desc) return '';
+
+  // Check for exact repetition (A + A) or (A + " " + A)
+  const len = desc.length;
+  // Try finding the midpoint split
+  for (let i = Math.floor(len / 2); i >= 10; i--) {
+    // We only look for repeats of substantial length (>10 chars)
+    const firstHalf = desc.substring(0, i).trim();
+    const secondHalf = desc.substring(i).trim();
+
+    if (firstHalf === secondHalf) {
+      return firstHalf;
+    }
+  }
+  return desc;
+}
