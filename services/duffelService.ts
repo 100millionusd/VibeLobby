@@ -99,28 +99,29 @@ export const duffelService = {
 
             console.log(`[Duffel] SUCCESS: Found ${roomsList.length} rooms for ${hotelName} (${realHotelId})`);
 
+            // --- DEBUG ROOM STRUCTURE ---
+            roomsList.forEach((r: any, i: number) => {
+              if (i === 0) console.log(`[Duffel] Room Keys available:`, Object.keys(r));
+            });
+
             const allRates = roomsList.flatMap((room: any) => {
+              // Fallback to Main Hotel Images if room has none
+              // Note: hotel.images is passed into searchAccommodations(hotel...)
+              const roomImages = room.photos?.map((p: any) => p.url) || [];
+              const effectiveImages = roomImages.length > 0 ? roomImages : (hotel.images || []);
+
               return (room.rates || []).map((rate: any) => ({
                 ...rate,
                 _roomName: room.name || rate._roomName,
-                _roomDescription: room.description, // [NEW] Capture Description
-                _roomPhotos: room.photos?.map((p: any) => p.url) // [NEW] Capture Photos
-              }));
-            });
-
-            if (allRates.length > 0) {
-              return allRates.map((rate: any) => ({
-                id: rate.id,
-                name: rate._roomName || 'Standard Room',
-                description: rate._roomDescription || `Standard stay option at ${hotelName}`,
-                photos: rate._roomPhotos || [],
+                _roomDescription: room.description || `Experience the ${room.name || 'stay'} at ${hotelName}.`, // Improved default
+                _roomPhotos: effectiveImages,
                 price: parseFloat(rate.total_amount),
                 currency: rate.total_currency,
                 cancellationPolicy: rate.conditions?.cancellation_refund === 'no_refund' ? 'non_refundable' : 'refundable',
                 bedType: 'Standard',
                 capacity: 2
               }));
-            }
+            });
           }
         } catch (innerErr) {
           console.warn(`[Duffel] Error fetching rates for result ${result.id}`, innerErr);
