@@ -753,18 +753,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h3 className="font-bold text-lg mb-2">Amenities</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedHotel.amenities.map(amenity => (
-                  <span key={amenity} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm">{amenity}</span>
-                ))}
-              </div>
-            </div>
 
-            <p className="text-gray-600 leading-relaxed mb-8">
-              {selectedHotel.description}
-            </p>
 
             {/* Sticky Booking Action */}
             <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 md:static md:bg-transparent md:border-0 md:p-0">
