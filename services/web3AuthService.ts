@@ -29,15 +29,7 @@ export const web3auth = new Web3Auth({
   web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_MAINNET,
   privateKeyProvider,
   sessionTime: 86400, // 1 day
-  uiConfig: {
-    appName: "VibeLobby",
-    mode: "light",
-    theme: {
-      primary: "#e11d48", // Brand Rose-600
-    },
-    loginMethodsOrder: ["google", "facebook", "twitter", "apple"],
-    defaultLanguage: "en",
-  },
+  // uiConfig removed: branding requires premium plan
 });
 
 const authAdapter = new AuthAdapter({
