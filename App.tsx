@@ -184,7 +184,7 @@ const App: React.FC = () => {
   };
 
   // HOTEL SELECTION HANDLER
-  const handleHotelSelect = async (hotel: ScoredHotel) => {
+  const handleHotelSelect = React.useCallback(async (hotel: ScoredHotel) => {
     setSelectedHotel(hotel);
     setDetailImageIndex(0);
     setShowAllAmenities(false);
@@ -202,29 +202,29 @@ const App: React.FC = () => {
       setRelevantUsers(guests);
       setAiForecast(forecast);
     });
-  };
+  }, [activeSearchTerm]);
 
-  const handleBookClick = () => {
+  const handleBookClick = React.useCallback(() => {
     if (!user) {
       login(); // Prompt login if trying to book
     } else {
       setShowBooking(true);
     }
-  };
+  }, [user, login]);
 
-  const handleDirectBook = (hotel: ScoredHotel) => {
+  const handleDirectBook = React.useCallback((hotel: ScoredHotel) => {
     if (!user) {
       login();
       return;
     }
     setSelectedHotel(hotel);
     setShowBooking(true);
-  };
+  }, [user, login]);
 
-  const handleBookingConfirm = () => {
+  const handleBookingConfirm = React.useCallback(() => {
     setShowBooking(false);
     setShowLobby(true);
-  };
+  }, []);
 
   // UI Helpers
   const nextDetailImage = () => {
