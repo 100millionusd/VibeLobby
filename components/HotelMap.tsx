@@ -108,6 +108,46 @@ const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHote
             : (hotels.length > 0 ? [hotels[0].coordinates.lat, hotels[0].coordinates.lng] : defaultCenter);
     }, [selectedHotel, hotels, defaultCenter]);
 
+    // Viewport Limiting State
+    const [visibleHotels, setVisibleHotels] = React.useState<ScoredHotel[]>([]);
+
+    // Component to handle map events and filtering
+    const MapEvents = () => {
+        const map = useMap();
+
+        const updateVisible = React.useCallback(() => {
+            const bounds = map.getBounds();
+
+            // 1. Filter by Bounds
+            const inView = hotels.filter(h =>
+                bounds.contains([h.coordinates.lat, h.coordinates.lng])
+            );
+
+            // 2. Limit excessive markers (performance protection)
+            // Even if 500 are in view, only show top 50 by vibe score to keep map fast
+            const capped = inView.slice(0, 50);
+
+            setVisibleHotels(capped);
+        }, [map]);
+
+        // Initial load
+        React.useEffect(() => {
+            updateVisible();
+        }, [updateVisible, hotels]); // Re-run if hotels list changes
+
+        // Listen for moves
+        L.DomEvent.on(map.getContainer(), 'moveend', updateVisible);
+
+        // Cleanup
+        React.useEffect(() => {
+            return () => {
+                L.DomEvent.off(map.getContainer(), 'moveend', updateVisible);
+            };
+        }, [map, updateVisible]);
+
+        return null;
+    };
+
     return (
         <div className={`w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 z-0 relative ${className || 'h-[600px]'}`}>
             <MapContainer
@@ -122,8 +162,9 @@ const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHote
                 />
 
                 <MapUpdater center={mapCenter} zoom={13} />
+                <MapEvents />
 
-                {hotels.map((hotel) => (
+                {visibleHotels.map((hotel) => (
                     <HotelMarker
                         key={hotel.id}
                         hotel={hotel}
