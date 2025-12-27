@@ -231,7 +231,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: updates.name,
         bio: updates.bio,
         avatar: updates.avatar,
-        digitalKeys: updates.digitalKeys // [NEW] Persist keys
+        digitalKeys: updates.digitalKeys, // [NEW] Persist keys
+        isGhostMode: updates.isGhostMode // [FIX] Persist Ghost Mode
       });
     } catch (err) {
       console.error("Failed to persist profile update", err);
