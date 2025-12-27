@@ -376,6 +376,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             name: presence.name,
             avatar: presence.avatar,
             bio: presence.bio,
+            isGhostMode: presence.isGhostMode, // [FIX] Read Ghost Status
             digitalKeys: [],
             isGuest: false
           });
@@ -395,10 +396,12 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
             name: currentUser.name,
             avatar: currentUser.avatar,
             bio: currentUser.bio,
+            isGhostMode: currentUser.isGhostMode, // [FIX] Send Ghost Status
             online_at: new Date().toISOString()
           });
         }
       });
+
 
 
 
@@ -421,7 +424,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
     return () => {
       channel.unsubscribe();
     };
-  }, [activeChannelId, interest, activeChannelName, currentUser.id]);
+  }, [activeChannelId, interest, activeChannelName, currentUser.id, currentUser.isGhostMode]); // [FIX] Re-run when Ghost Mode toggles
 
   // 2. POLLING FOR NUDGES (Simple simulation for real-time vibe updates)
   useEffect(() => {
