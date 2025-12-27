@@ -148,16 +148,25 @@ const HotelMap: React.FC<HotelMapProps> = ({ hotels, selectedHotel, onSelectHote
         return null;
     };
 
-    // Helper to fix "Gray Tiles" by forcing a resize calculation after mount/animation
+    // Helper to fix "Gray Tiles" by observing container resize events
     const ResizeHandler = () => {
         const map = useMap();
+
         React.useEffect(() => {
-            // Short delay to allow 'animate-in' classes to complete
-            const timer = setTimeout(() => {
+            const container = map.getContainer();
+            if (!container) return;
+
+            const resizeObserver = new ResizeObserver(() => {
                 map.invalidateSize();
-            }, 400); // slightly longer than the 300ms animation in App.tsx
-            return () => clearTimeout(timer);
+            });
+
+            resizeObserver.observe(container);
+
+            return () => {
+                resizeObserver.disconnect();
+            };
         }, [map]);
+
         return null;
     };
 
