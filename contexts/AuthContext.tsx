@@ -93,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
       let name = userInfo.name || 'Anonymous Vibe';
       let bio = 'Just vibing on-chain';
+      let isGhostMode = false; // [FIX] Default off
 
       // 4a. Check if we have a persisted profile in Supabase
       // This ensures we don't overwrite custom avatars with the generated one on every login
@@ -102,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteProfile.avatar) avatar = remoteProfile.avatar;
           if (remoteProfile.name) name = remoteProfile.name;
           if (remoteProfile.bio) bio = remoteProfile.bio;
+          if (remoteProfile.isGhostMode) isGhostMode = remoteProfile.isGhostMode; // [FIX] Restore from DB
         } else {
           // Fallback to local storage if API fails or user not found (offline support)
           if (stored) {
@@ -110,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (storedUser.avatar) avatar = storedUser.avatar;
               if (storedUser.name) name = storedUser.name;
               if (storedUser.bio) bio = storedUser.bio;
+              if (storedUser.isGhostMode) isGhostMode = storedUser.isGhostMode; // [FIX] Restore from Local
             }
           }
         }
@@ -122,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (storedUser.avatar) avatar = storedUser.avatar;
             if (storedUser.name) name = storedUser.name;
             if (storedUser.bio) bio = storedUser.bio;
+            if (storedUser.isGhostMode) isGhostMode = storedUser.isGhostMode; // [FIX] Restore from Local
           }
         }
       }
@@ -135,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         walletAddress: address,
         verifier: userInfo.verifier,
         isGuest: false,
+        isGhostMode: isGhostMode, // [FIX] Set in new user object
         digitalKeys: existingKeys
       };
 
