@@ -100,7 +100,7 @@ export const api = {
         verifier: '',
         isGuest: false,
         isGhostMode: data.is_ghost_mode, // [FIX] Restore persistence
-        digitalKeys: [] // Keys are stored separately or in local storage for now
+        digitalKeys: data.digital_keys || [] // [FIX] Restore keys from DB
       };
     }
   },

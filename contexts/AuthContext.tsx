@@ -104,6 +104,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (remoteProfile.name) name = remoteProfile.name;
           if (remoteProfile.bio) bio = remoteProfile.bio;
           if (remoteProfile.isGhostMode) isGhostMode = remoteProfile.isGhostMode; // [FIX] Restore from DB
+
+          // [FIX] Merge Remote Keys with Local Keys (Remote takes precedence for source of truth)
+          if (remoteProfile.digitalKeys && remoteProfile.digitalKeys.length > 0) {
+            // Deduplicate based on bookingReference
+            const localKeys = existingKeys;
+            const remoteKeys = remoteProfile.digitalKeys;
+
+            // Create a map by Booking Ref to merge
+            const keyMap = new Map();
+
+            // Add local first
+            localKeys.forEach(k => keyMap.set(k.bookingReference, k));
+
+            // Add remote (overwrites local with latest server state)
+            remoteKeys.forEach(k => keyMap.set(k.bookingReference, k));
+
+            existingKeys = Array.from(keyMap.values()) as DigitalKey[];
+          }
         } else {
           // Fallback to local storage if API fails or user not found (offline support)
           if (stored) {
