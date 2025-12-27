@@ -856,7 +856,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                 <button
                   key={user.id}
                   onClick={() => handleUserClick(user)}
-                  className={`relative shrink-0 group flex flex-col items-center gap-1 ${!isOnline ? 'opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100' : ''}`}
+                  className={`relative shrink-0 group flex flex-col items-center gap-1 ${!isOnline || (user.id === currentUser.id && user.isGhostMode) ? 'opacity-50 grayscale-[0.5]' : ''}`}
                 >
                   <div className="relative">
                     <img
@@ -874,7 +874,7 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ hotel, interest, currentUser, ini
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? 'You' : user.name}</span>
+                  <span className="text-[10px] text-white/90 truncate max-w-[50px]">{user.id === currentUser.id ? (user.isGhostMode ? 'You (Hidden)' : 'You') : user.name}</span>
                 </button>
               );
             })}
