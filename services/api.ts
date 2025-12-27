@@ -99,6 +99,7 @@ export const api = {
         walletAddress: '', // We might need to store this if we want to retrieve it
         verifier: '',
         isGuest: false,
+        isGhostMode: data.is_ghost_mode, // [FIX] Restore persistence
         digitalKeys: [] // Keys are stored separately or in local storage for now
       };
     }
