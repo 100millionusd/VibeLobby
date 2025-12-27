@@ -862,7 +862,7 @@ const App: React.FC = () => {
                 >
                   <img
                     src="/avatars/city_guide.png"
-                    alt="City Guide"
+                    alt="City Chat"
                     className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                   />
                   <div className="flex flex-col items-start leading-tight">
@@ -900,7 +900,7 @@ const App: React.FC = () => {
                 <div className="relative">
                   <img
                     src="/avatars/hotel_concierge.png"
-                    alt="Concierge"
+                    alt="Hotel Chat"
                     className="w-12 h-12 rounded-full border-2 border-white shadow-md object-cover"
                   />
                   {unreadCount > 0 && (
