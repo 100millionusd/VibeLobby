@@ -866,7 +866,7 @@ const App: React.FC = () => {
                     className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                   />
                   <div className="flex flex-col items-start leading-tight">
-                    <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">City Guide</span>
+                    <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">City Chat</span>
                     <span className="font-bold text-sm hidden md:inline">{cityKey.city} Lobby</span>
                   </div>
                 </button>
@@ -910,7 +910,7 @@ const App: React.FC = () => {
                   )}
                 </div>
                 <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Concierge</span>
+                  <span className="text-[10px] font-medium opacity-80 uppercase tracking-wide">Hotel Chat</span>
                   <span className="font-bold text-base hidden md:inline max-w-[150px] truncate">{primaryKey.hotelName}</span>
                 </div>
               </button>
